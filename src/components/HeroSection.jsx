@@ -1,32 +1,72 @@
 import { useState, useEffect, useRef } from 'react';
+import videojs from 'video.js';
+import 'video.js/dist/video-js.css';
 import useMovieStore from '../store/useMovieStore';
 
 export default function HeroSection() {
     const { movies, playMovie } = useMovieStore();
     const [heroMovie, setHeroMovie] = useState(null);
-    const videoRef = useRef(null);
+    const videoContainerRef = useRef(null);
+    const playerRef = useRef(null);
     const [videoReady, setVideoReady] = useState(false);
     const [isMuted, setIsMuted] = useState(true);
 
     useEffect(() => {
         if (movies.length > 0) {
-            // Pick the highest match movie as featured
             const featured = [...movies].sort((a, b) => b.match - a.match)[0];
             setHeroMovie(featured);
         }
     }, [movies]);
 
+    // Initialize Video.js for hero background
     useEffect(() => {
-        if (videoRef.current && heroMovie) {
-            videoRef.current.play().catch(() => { });
-        }
+        if (!heroMovie || !videoContainerRef.current) return;
+
+        const videoElement = document.createElement('video-js');
+        videoContainerRef.current.innerHTML = '';
+        videoContainerRef.current.appendChild(videoElement);
+
+        const player = videojs(videoElement, {
+            autoplay: true,
+            controls: false,
+            muted: true,
+            loop: true,
+            preload: 'auto',
+            fluid: false,
+            fill: true,
+            sources: [{
+                src: heroMovie.streamUrl,
+                type: 'video/mp4',
+            }],
+        }, () => {
+            setVideoReady(true);
+            console.log('🎬 Hero Video.js player ready');
+        });
+
+        playerRef.current = player;
+
+        return () => {
+            if (player && !player.isDisposed()) {
+                player.dispose();
+                playerRef.current = null;
+            }
+        };
     }, [heroMovie]);
+
+    const toggleMute = () => {
+        const player = playerRef.current;
+        if (player && !player.isDisposed()) {
+            const newMuted = !player.muted();
+            player.muted(newMuted);
+            setIsMuted(newMuted);
+        }
+    };
 
     if (!heroMovie) return null;
 
     return (
         <section className="hero-section" id="hero-section">
-            {/* Background Video */}
+            {/* Background Video via Video.js */}
             <div className="absolute inset-0">
                 {/* Poster/Fallback Image */}
                 <img
@@ -34,15 +74,11 @@ export default function HeroSection() {
                     alt={heroMovie.name}
                     className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${videoReady ? 'opacity-0' : 'opacity-100'}`}
                 />
-                <video
-                    ref={videoRef}
-                    src={heroMovie.streamUrl}
-                    muted={isMuted}
-                    loop
-                    playsInline
-                    autoPlay
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
-                    onLoadedData={() => setVideoReady(true)}
+                {/* Video.js Container */}
+                <div
+                    ref={videoContainerRef}
+                    className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ${videoReady ? 'opacity-100' : 'opacity-0'
+                        } [&_.video-js]:w-full [&_.video-js]:h-full [&_.video-js_.vjs-tech]:object-cover [&_.video-js]:bg-transparent [&_.vjs-control-bar]:hidden [&_.vjs-big-play-button]:hidden`}
                 />
                 {/* Overlays */}
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
@@ -56,6 +92,9 @@ export default function HeroSection() {
                         Featured
                     </span>
                     <span className="match-badge text-sm">{heroMovie.match}% Match</span>
+                    <span className="text-[10px] font-bold text-white/50 bg-white/10 px-1.5 py-0.5 rounded">
+                        VLC.js
+                    </span>
                 </div>
 
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 leading-tight">
@@ -102,10 +141,7 @@ export default function HeroSection() {
             <div className="absolute bottom-24 right-[4%] z-10">
                 <button
                     className="volume-btn"
-                    onClick={() => {
-                        setIsMuted(!isMuted);
-                        if (videoRef.current) videoRef.current.muted = !isMuted;
-                    }}
+                    onClick={toggleMute}
                     aria-label={isMuted ? 'Unmute' : 'Mute'}
                     id="hero-mute-btn"
                 >

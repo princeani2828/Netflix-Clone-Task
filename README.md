@@ -1,10 +1,11 @@
 # Netflix Clone - Web App Prototype
 
-A premium Netflix web application prototype built with **React + Vite**, **Tailwind CSS**, and **Express.js** backend. Features interactive movie preview on hover, fullscreen playback, and a responsive design across all devices.
+A premium Netflix web application prototype built with **React + Vite**, **Tailwind CSS**, **Video.js (VLC.js)** player, and **Express.js** backend. Features interactive movie preview on hover, fullscreen playback with a professional media player, and a responsive design across all devices.
 
 ![React](https://img.shields.io/badge/React-19-blue?logo=react)
 ![Vite](https://img.shields.io/badge/Vite-7-purple?logo=vite)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-blue?logo=tailwindcss)
+![Video.js](https://img.shields.io/badge/Video.js%20(VLC.js)-8-orange?logo=videojs)
 ![Express](https://img.shields.io/badge/Express-4-green?logo=express)
 ![Zustand](https://img.shields.io/badge/Zustand-5-orange)
 
@@ -18,6 +19,7 @@ A premium Netflix web application prototype built with **React + Vite**, **Tailw
 | **React 19** | Industry-standard component-based architecture with hooks for clean state management |
 | **Vite 7** | Lightning-fast HMR, optimized builds, and superior developer experience over CRA |
 | **Tailwind CSS 4** | Utility-first CSS with the new v4 `@theme` system for custom design tokens |
+| **Video.js (VLC.js)** | Production-grade media player library — VLC.js-style playback engine supporting .mp4, .m3u8 (HLS), and adaptive streaming with professional player UI |
 | **Zustand** | Lightweight, minimal-boilerplate state management (simpler than Redux for this scope) |
 | **Axios** | Promise-based HTTP client with interceptors for API communication |
 
@@ -45,10 +47,11 @@ netflix-clone/
 │   │
 │   ├── components/
 │   │   ├── Navbar.jsx            # Sticky navbar with scroll effect
-│   │   ├── HeroSection.jsx       # Featured movie banner with video background
-│   │   ├── MovieCard.jsx         # Interactive card with hover-to-preview
+│   │   ├── HeroSection.jsx       # Featured movie banner with Video.js background
+│   │   ├── MovieCard.jsx         # Interactive card with Video.js hover-to-preview
 │   │   ├── MovieRow.jsx          # Responsive grid row of movies
-│   │   ├── FullScreenPlayer.jsx  # Full-screen video player with controls
+│   │   ├── FullScreenPlayer.jsx  # Full-screen Video.js player with custom controls
+│   │   ├── VideoJSPlayer.jsx     # Reusable Video.js (VLC.js) wrapper component
 │   │   ├── LoadingScreen.jsx     # Netflix-branded loading spinner
 │   │   └── Footer.jsx            # Footer with links & tech stack info
 │   │
@@ -109,16 +112,19 @@ npm run dev
 ## Features & Interactions
 
 ### Movie Preview on Hover
-- Hovering on any movie card **plays the video preview** in the background
+- Hovering on any movie card **plays the video preview** via **Video.js (VLC.js)** in the background
 - Only the **currently hovered movie** plays at a time
-- Preview is **muted** by default
-- Smooth fade transition between poster image and video
+- Preview is **muted** by default with a VLC.js badge indicator
+- Smooth fade transition between poster image and Video.js player
+- Video.js player is lazily initialized on first hover for optimal performance
 
-### Full-Screen Playback
-- Clicking a movie **hides the main page** and plays the video fullscreen
+### Full-Screen Playback (Video.js / VLC.js Player)
+- Clicking a movie **hides the main page** and plays the video via **Video.js** fullscreen
 - A **transparent Back button** appears in the top-left when you **move the mouse**
 - Controls auto-hide after 3 seconds of inactivity
-- Full playback controls: play/pause, volume, progress bar, seek
+- Full playback controls: play/pause, skip ±10s, volume slider, progress bar with buffer indicator, fullscreen toggle
+- **VLC.js Player** badge shown during playback
+- Supports adaptive streaming and multiple playback rates (0.5x, 1x, 1.25x, 1.5x, 2x)
 
 ### Back Button
 - Returns to the **Netflix main page**
@@ -133,6 +139,9 @@ npm run dev
 | `M` | Mute / Unmute |
 | `←` | Rewind 10 seconds |
 | `→` | Forward 10 seconds |
+| `↑` | Volume up |
+| `↓` | Volume down |
+| `F` | Toggle fullscreen |
 
 ---
 
@@ -170,7 +179,7 @@ All videos are sourced from **Google's open-source sample video bucket** and **B
 | Tears of Steel | Blender Foundation (2012) |
 | For Bigger Blazes/Escapes/Fun/Joyrides/Meltdowns | Google Sample Videos |
 
-All videos are `.mp4` format streamed directly from public CDN URLs. The HTML5 `<video>` player is used for native browser playback simulation.
+All videos are `.mp4` format streamed directly from public CDN URLs. **Video.js** (VLC.js-style player) is used as the media playback engine, providing professional-grade stream simulation with adaptive buffering, playback controls, and multi-format support (.mp4, .m3u8/HLS, .webm).
 
 ---
 
@@ -184,3 +193,5 @@ All videos are `.mp4` format streamed directly from public CDN URLs. The HTML5 `
 - [x] Keyboard shortcuts for player
 - [x] SEO meta tags
 - [x] Accessible elements (ARIA labels, keyboard navigation)
+- [x] Video.js (VLC.js) professional media player integration
+- [x] Buffer progress indicator in player controls

@@ -1,19 +1,75 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
+import videojs from 'video.js';
+import 'video.js/dist/video-js.css';
 import useMovieStore from '../store/useMovieStore';
 
 export default function MovieCard({ movie, index }) {
-    const videoRef = useRef(null);
+    const videoContainerRef = useRef(null);
+    const playerRef = useRef(null);
     const hoverTimeoutRef = useRef(null);
     const [isHovered, setIsHovered] = useState(false);
-    const [videoLoaded, setVideoLoaded] = useState(false);
+    const [videoReady, setVideoReady] = useState(false);
     const [imageError, setImageError] = useState(false);
     const { setHoveredMovie, playMovie, hoveredMovieId, playbackStatus } = useMovieStore();
 
     const isCurrentlyHovered = hoveredMovieId === movie.id;
     const status = playbackStatus[movie.id] || 'available';
 
+    // Initialize Video.js player on hover
+    useEffect(() => {
+        if (isHovered && videoContainerRef.current && !playerRef.current) {
+            const videoElement = document.createElement('video-js');
+            videoContainerRef.current.innerHTML = '';
+            videoContainerRef.current.appendChild(videoElement);
+
+            const player = videojs(videoElement, {
+                autoplay: false,
+                controls: false,
+                muted: true,
+                loop: true,
+                preload: 'auto',
+                fluid: false,
+                fill: true,
+                sources: [{
+                    src: movie.streamUrl,
+                    type: 'video/mp4',
+                }],
+            }, () => {
+                setVideoReady(true);
+            });
+
+            playerRef.current = player;
+        }
+
+        return () => {
+            // Don't dispose on every hover change — only on unmount
+        };
+    }, [isHovered, movie.streamUrl]);
+
+    // Play/pause based on hover state
+    useEffect(() => {
+        const player = playerRef.current;
+        if (!player || player.isDisposed()) return;
+
+        if (isCurrentlyHovered && videoReady) {
+            player.play().catch(() => { });
+        } else {
+            player.pause();
+        }
+    }, [isCurrentlyHovered, videoReady]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+            if (playerRef.current && !playerRef.current.isDisposed()) {
+                playerRef.current.dispose();
+                playerRef.current = null;
+            }
+        };
+    }, []);
+
     const handleMouseEnter = useCallback(() => {
-        // Small delay to prevent accidental hovers
         hoverTimeoutRef.current = setTimeout(() => {
             setIsHovered(true);
             setHoveredMovie(movie.id);
@@ -21,38 +77,26 @@ export default function MovieCard({ movie, index }) {
     }, [movie.id, setHoveredMovie]);
 
     const handleMouseLeave = useCallback(() => {
-        if (hoverTimeoutRef.current) {
-            clearTimeout(hoverTimeoutRef.current);
-        }
+        if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
         setIsHovered(false);
         setHoveredMovie(null);
-        if (videoRef.current) {
-            videoRef.current.pause();
-            videoRef.current.currentTime = 0;
+        const player = playerRef.current;
+        if (player && !player.isDisposed()) {
+            player.pause();
+            player.currentTime(0);
         }
     }, [setHoveredMovie]);
 
     const handleClick = useCallback(() => {
+        // Dispose preview player before going fullscreen
+        if (playerRef.current && !playerRef.current.isDisposed()) {
+            playerRef.current.dispose();
+            playerRef.current = null;
+            setVideoReady(false);
+            setIsHovered(false);
+        }
         playMovie(movie);
     }, [movie, playMovie]);
-
-    // Play/pause video based on hover state
-    useEffect(() => {
-        if (isCurrentlyHovered && videoRef.current && videoLoaded) {
-            videoRef.current.play().catch(() => { });
-        } else if (!isCurrentlyHovered && videoRef.current) {
-            videoRef.current.pause();
-        }
-    }, [isCurrentlyHovered, videoLoaded]);
-
-    // Clean up timeout on unmount
-    useEffect(() => {
-        return () => {
-            if (hoverTimeoutRef.current) {
-                clearTimeout(hoverTimeoutRef.current);
-            }
-        };
-    }, []);
 
     const animationDelay = `${index * 0.08}s`;
 
@@ -75,7 +119,7 @@ export default function MovieCard({ movie, index }) {
                     src={movie.logo}
                     alt={movie.name}
                     loading="lazy"
-                    className={`transition-opacity duration-500 ${isCurrentlyHovered && videoLoaded ? 'opacity-0' : 'opacity-100'}`}
+                    className={`transition-opacity duration-500 ${isCurrentlyHovered && videoReady ? 'opacity-0' : 'opacity-100'}`}
                     onError={() => setImageError(true)}
                 />
             ) : (
@@ -84,18 +128,12 @@ export default function MovieCard({ movie, index }) {
                 </div>
             )}
 
-            {/* Preview Video (loaded on hover) */}
+            {/* Video.js Preview Player */}
             {isHovered && (
-                <video
-                    ref={videoRef}
-                    src={movie.streamUrl}
-                    muted
-                    loop
-                    playsInline
-                    preload="auto"
-                    className={`transition-opacity duration-500 ${videoLoaded ? 'opacity-100' : 'opacity-0'}`}
-                    onLoadedData={() => setVideoLoaded(true)}
-                    onError={() => setVideoLoaded(false)}
+                <div
+                    ref={videoContainerRef}
+                    className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${videoReady ? 'opacity-100' : 'opacity-0'
+                        } [&_.video-js]:w-full [&_.video-js]:h-full [&_.video-js_.vjs-tech]:object-cover [&_.video-js]:bg-transparent [&_.vjs-control-bar]:hidden`}
                 />
             )}
 
@@ -103,6 +141,15 @@ export default function MovieCard({ movie, index }) {
             <div className="absolute top-3 right-3 z-10">
                 <span className={`status-dot ${status}`} title={status} />
             </div>
+
+            {/* VLC.js Badge (on hover) */}
+            {isCurrentlyHovered && videoReady && (
+                <div className="absolute top-3 left-3 z-10">
+                    <span className="text-[10px] font-bold text-white/60 bg-black/50 px-1.5 py-0.5 rounded backdrop-blur-sm">
+                        VLC.js
+                    </span>
+                </div>
+            )}
 
             {/* Info Overlay */}
             <div className="movie-card-info">
