@@ -1,19 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import useMovieStore from '../store/useMovieStore';
 
 export default function HeroSection() {
+    const navigate = useNavigate();
     const { movies, playMovie } = useMovieStore();
     const [heroMovie, setHeroMovie] = useState(null);
     const videoContainerRef = useRef(null);
-    const playerRef = useRef(null);
     const [videoReady, setVideoReady] = useState(false);
     const [isMuted, setIsMuted] = useState(true);
+    const playerRef = useRef(null);
 
     useEffect(() => {
         if (movies.length > 0) {
-            const featured = [...movies].sort((a, b) => b.match - a.match)[0];
+            // Force Big Buck Bunny (ID: 1) as the hero preview video
+            const featured = movies.find(m => m.id === 1) || movies[0];
             setHeroMovie(featured);
         }
     }, [movies]);
@@ -40,7 +43,7 @@ export default function HeroSection() {
             }],
         }, () => {
             setVideoReady(true);
-            console.log('🎬 Hero Video.js player ready');
+            console.log('Hero Video.js player ready');
         });
 
         playerRef.current = player;
@@ -59,6 +62,13 @@ export default function HeroSection() {
             const newMuted = !player.muted();
             player.muted(newMuted);
             setIsMuted(newMuted);
+        }
+    };
+
+    const handlePlay = () => {
+        if (heroMovie) {
+            playMovie(heroMovie);
+            navigate(`/play/${heroMovie.id}`);
         }
     };
 
@@ -114,7 +124,7 @@ export default function HeroSection() {
                 <div className="flex items-center gap-3" style={{ marginTop: '40px' }}>
                     <button
                         className="play-btn"
-                        onClick={() => playMovie(heroMovie)}
+                        onClick={handlePlay}
                         id="hero-play-btn"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">

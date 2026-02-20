@@ -1,13 +1,20 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import useMovieStore from '../store/useMovieStore';
 
 export default function FullScreenPlayer() {
+    const { id } = useParams();
+    const navigate = useNavigate();
     const videoContainerRef = useRef(null);
     const playerRef = useRef(null);
     const hideTimerRef = useRef(null);
-    const { currentlyPlaying, stopPlayback } = useMovieStore();
+    const { movies, currentlyPlaying, playMovie, stopPlayback } = useMovieStore();
+
+    // Fall back to finding the movie from the store via the URL id if currentlyPlaying state is empty
+    const movieToPlay = currentlyPlaying || movies.find(m => m.id === Number(id));
+
     const [showControls, setShowControls] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
     const [progress, setProgress] = useState(0);
@@ -17,9 +24,17 @@ export default function FullScreenPlayer() {
     const [isMuted, setIsMuted] = useState(false);
     const [bufferedPercent, setBufferedPercent] = useState(0);
 
+    // Call backend API if user navigates directly here
+    useEffect(() => {
+        if (!currentlyPlaying && movieToPlay) {
+            playMovie(movieToPlay);
+        }
+    }, [currentlyPlaying, movieToPlay, playMovie]);
+
     const handleBack = useCallback(() => {
         stopPlayback();
-    }, [stopPlayback]);
+        navigate(-1);
+    }, [stopPlayback, navigate]);
 
     const handleMouseMove = useCallback(() => {
         setShowControls(true);

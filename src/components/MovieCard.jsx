@@ -1,9 +1,11 @@
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import useMovieStore from '../store/useMovieStore';
 
 export default function MovieCard({ movie, index, rank }) {
+    const navigate = useNavigate();
     const videoContainerRef = useRef(null);
     const playerRef = useRef(null);
     const hoverTimeoutRef = useRef(null);
@@ -97,7 +99,8 @@ export default function MovieCard({ movie, index, rank }) {
             setIsHovered(false);
         }
         playMovie(movie);
-    }, [movie, playMovie]);
+        navigate(`/play/${movie.id}`);
+    }, [movie, playMovie, navigate]);
 
     return (
         <div

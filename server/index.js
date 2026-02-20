@@ -1,5 +1,8 @@
 const express = require('express');
 const cors = require('cors');
+const sqlite3 = require('sqlite3');
+const { open } = require('sqlite');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -7,8 +10,10 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// In-memory movie data store
-const movies = [
+let db;
+
+// In-memory initial data for the database
+const initialMovies = [
     {
         id: 1,
         name: 'Big Buck Bunny',
@@ -24,128 +29,112 @@ const movies = [
     },
     {
         id: 2,
-        name: 'Elephants Dream',
+        name: 'Stranger Things',
         genre: 'Sci-Fi',
-        year: 2006,
-        rating: 'PG',
-        duration: '10 min',
-        description: 'Two people explore a strange mechanical world, each with a different vision of what they see.',
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Elephants_Dream_s5_both.jpg/800px-Elephants_Dream_s5_both.jpg',
+        year: 2016,
+        rating: 'TV-14',
+        duration: '4 Seasons',
+        description: 'When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces and one strange little girl.',
+        logo: 'https://static.tvmaze.com/uploads/images/original_untouched/595/1489169.jpg',
         streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
         status: 'available',
         match: 95,
     },
     {
         id: 3,
-        name: 'For Bigger Blazes',
-        genre: 'Action',
-        year: 2015,
-        rating: 'PG-13',
-        duration: '15 sec',
-        description: 'An intense action-packed short demonstrating chromecast streaming capabilities with blazing visuals.',
-        logo: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg',
+        name: 'Breaking Bad',
+        genre: 'Drama',
+        year: 2008,
+        rating: 'TV-MA',
+        duration: '5 Seasons',
+        description: 'A high school chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine in order to secure his family\'s future.',
+        logo: 'https://static.tvmaze.com/uploads/images/original_untouched/501/1253519.jpg',
         streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        status: 'available',
+        match: 99,
+    },
+    {
+        id: 4,
+        name: 'Chernobyl',
+        genre: 'Drama',
+        year: 2019,
+        rating: 'TV-MA',
+        duration: '1 Season',
+        description: 'In April 1986, an explosion at the Chernobyl nuclear power plant in the Union of Soviet Socialist Republics becomes one of the world\'s worst man-made catastrophes.',
+        logo: 'https://static.tvmaze.com/uploads/images/original_untouched/193/482599.jpg',
+        streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
         status: 'available',
         match: 92,
     },
     {
-        id: 4,
-        name: 'For Bigger Escapes',
-        genre: 'Thriller',
-        year: 2015,
-        rating: 'PG-13',
-        duration: '15 sec',
-        description: 'A thrilling escape sequence that pushes the boundaries of streaming technology and visual storytelling.',
-        logo: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerEscapes.jpg',
-        streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-        status: 'available',
-        match: 89,
-    },
-    {
         id: 5,
-        name: 'For Bigger Fun',
-        genre: 'Comedy',
-        year: 2015,
-        rating: 'G',
-        duration: '1 min',
-        description: 'A fun and playful short film designed to showcase the joy of high-quality streaming entertainment.',
-        logo: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerFun.jpg',
+        name: 'Game of Thrones',
+        genre: 'Fantasy',
+        year: 2011,
+        rating: 'TV-MA',
+        duration: '8 Seasons',
+        description: 'Nine noble families fight for control over the lands of Westeros, while an ancient enemy returns after being dormant for millennia.',
+        logo: 'https://static.tvmaze.com/uploads/images/original_untouched/498/1245274.jpg',
         streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
         status: 'available',
-        match: 87,
+        match: 97,
     },
     {
         id: 6,
-        name: 'For Bigger Joyrides',
-        genre: 'Adventure',
-        year: 2015,
-        rating: 'PG',
-        duration: '15 sec',
-        description: 'An adventurous joyride through stunning landscapes with cutting-edge visual effects.',
-        logo: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerJoyrides.jpg',
+        name: 'The Mandalorian',
+        genre: 'Sci-Fi',
+        year: 2019,
+        rating: 'TV-14',
+        duration: '3 Seasons',
+        description: 'The travels of a lone bounty hunter in the outer reaches of the galaxy, far from the authority of the New Republic.',
+        logo: 'https://static.tvmaze.com/uploads/images/original_untouched/501/1253498.jpg',
         streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
         status: 'available',
-        match: 85,
+        match: 94,
     },
     {
         id: 7,
-        name: 'For Bigger Meltdowns',
+        name: 'Peaky Blinders',
         genre: 'Drama',
-        year: 2015,
-        rating: 'PG',
-        duration: '15 sec',
-        description: 'A dramatic short that captures the intensity and emotion of a critical meltdown scenario.',
-        logo: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerMeltdowns.jpg',
+        year: 2013,
+        rating: 'TV-MA',
+        duration: '6 Seasons',
+        description: 'A gangster family epic set in 1900s England, centering on a gang who sew razor blades in the peaks of their caps, and their fierce boss Tommy Shelby.',
+        logo: 'https://static.tvmaze.com/uploads/images/original_untouched/48/122213.jpg',
         streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
         status: 'available',
-        match: 83,
+        match: 91,
     },
     {
         id: 8,
-        name: 'Sintel',
-        genre: 'Fantasy',
-        year: 2010,
-        rating: 'PG-13',
-        duration: '14 min',
-        description: 'A lonely young woman searches for her pet dragon and encounters dangerous adversaries in a vast, fantastical world.',
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Sintel_poster.jpg/800px-Sintel_poster.jpg',
+        name: 'Narcos',
+        genre: 'Crime',
+        year: 2015,
+        rating: 'TV-MA',
+        duration: '3 Seasons',
+        description: 'A chronicled look at the criminal exploits of Colombian drug lord Pablo Escobar, as well as the many other drug kingpins who plagued the country through the years.',
+        logo: 'https://static.tvmaze.com/uploads/images/original_untouched/498/1246087.jpg',
         streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
         status: 'available',
         match: 96,
     },
     {
         id: 9,
-        name: 'Tears of Steel',
-        genre: 'Sci-Fi',
-        year: 2012,
-        rating: 'PG-13',
-        duration: '12 min',
-        description: 'In an apocalyptic future, a group of warriors and scientists must take on a horde of robots to save humanity.',
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Tears_of_Steel_frame_no._3182.png/800px-Tears_of_Steel_frame_no._3182.png',
+        name: 'Sherlock',
+        genre: 'Mystery',
+        year: 2010,
+        rating: 'TV-14',
+        duration: '4 Seasons',
+        description: 'A modern update finds the famous sleuth and his doctor partner solving crime in 21st century London.',
+        logo: 'https://static.tvmaze.com/uploads/images/original_untouched/171/428042.jpg',
         streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
         status: 'available',
-        match: 94,
-    },
-    {
-        id: 10,
-        name: 'Subaru Outback',
-        genre: 'Adventure',
-        year: 2018,
-        rating: 'G',
-        duration: '30 sec',
-        description: 'A stunning cinematic showcase of the Subaru Outback conquering rugged terrain and breathtaking landscapes.',
-        logo: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/SubaruOutbackOnStreetAndDirt.jpg',
-        streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
-        status: 'available',
-        match: 81,
-    },
+        match: 98,
+    }
 ];
 
-// Playback log
-const playbackLog = [];
-
-// Validation middleware
-const validateMovieId = (req, res, next) => {
+// Async Validation middleware
+const validateMovieId = async (req, res, next) => {
     const { movieId } = req.params;
     const id = Number.parseInt(movieId, 10);
 
@@ -156,21 +145,28 @@ const validateMovieId = (req, res, next) => {
         });
     }
 
-    const movie = movies.find((m) => m.id === id);
-    if (!movie) {
-        return res.status(404).json({
-            success: false,
-            error: `Movie with ID ${id} not found.`,
-        });
+    try {
+        const movie = await db.get('SELECT * FROM movies WHERE id = ?', [id]);
+        if (!movie) {
+            return res.status(404).json({
+                success: false,
+                error: `Movie with ID ${id} not found.`,
+            });
+        }
+        req.movie = movie;
+        next();
+    } catch (error) {
+        console.error('Validation error:', error);
+        res.status(500).json({ success: false, error: 'Database error' });
     }
-
-    req.movie = movie;
-    next();
 };
 
-// GET /api/movies - Returns list of all movies
-app.get('/api/movies', (req, res) => {
+// GET /movies and /api/movies - Returns list of all movies
+app.get(['/movies', '/api/movies'], async (req, res) => {
     try {
+        // As per requirements: "returns list of movies with name, logo, id, status, and stream URL"
+        // Also retaining other fields for backward compatibility with frontend
+        const movies = await db.all('SELECT * FROM movies');
         res.json({
             success: true,
             count: movies.length,
@@ -185,77 +181,94 @@ app.get('/api/movies', (req, res) => {
     }
 });
 
-// GET /api/movies/:movieId - Returns a single movie by ID
-app.get('/api/movies/:movieId', validateMovieId, (req, res) => {
+// GET /movies/:movieId and /api/movies/:movieId - Returns a single movie by ID
+app.get(['/movies/:movieId', '/api/movies/:movieId'], validateMovieId, (req, res) => {
     res.json({
         success: true,
         data: req.movie,
     });
 });
 
-// POST /api/play/:movieId - Simulates starting playback
-app.post('/api/play/:movieId', validateMovieId, (req, res) => {
+// POST /play/:movieId and /api/play/:movieId - Simulates starting playback
+app.post(['/play/:movieId', '/api/play/:movieId'], validateMovieId, async (req, res) => {
     const movie = req.movie;
-    const logEntry = {
-        movieId: movie.id,
-        movieName: movie.name,
-        action: 'play',
-        timestamp: new Date().toISOString(),
-        status: 'streaming',
-    };
+    const timestamp = new Date().toISOString();
 
-    playbackLog.push(logEntry);
+    try {
+        // Log the playback
+        await db.run(
+            'INSERT INTO playback_log (movie_id, movie_name, action, timestamp, status) VALUES (?, ?, ?, ?, ?)',
+            [movie.id, movie.name, 'play', timestamp, 'streaming']
+        );
 
-    // Update movie status
-    movie.status = 'streaming';
+        // Update movie status
+        await db.run('UPDATE movies SET status = ? WHERE id = ?', ['streaming', movie.id]);
 
-    console.log(`▶ Playback started: "${movie.name}" (ID: ${movie.id}) at ${logEntry.timestamp}`);
+        console.log(`▶ Playback started: "${movie.name}" (ID: ${movie.id}) at ${timestamp}`);
 
-    res.json({
-        success: true,
-        message: `Now streaming "${movie.name}"`,
-        data: {
-            ...movie,
-            streamStatus: 'active',
-            playbackStarted: logEntry.timestamp,
-        },
-    });
+        // Return updated movie
+        const updatedMovie = await db.get('SELECT * FROM movies WHERE id = ?', [movie.id]);
+
+        res.json({
+            success: true,
+            message: `Now streaming "${updatedMovie.name}"`,
+            data: {
+                ...updatedMovie,
+                streamStatus: 'active',
+                playbackStarted: timestamp,
+            },
+        });
+    } catch (error) {
+        console.error('Playback error:', error);
+        res.status(500).json({ success: false, error: 'Failed to start playback' });
+    }
 });
 
-// POST /api/stop/:movieId - Simulates stopping playback
-app.post('/api/stop/:movieId', validateMovieId, (req, res) => {
+// POST /stop/:movieId and /api/stop/:movieId - Simulates stopping playback
+app.post(['/stop/:movieId', '/api/stop/:movieId'], validateMovieId, async (req, res) => {
     const movie = req.movie;
-    const logEntry = {
-        movieId: movie.id,
-        movieName: movie.name,
-        action: 'stop',
-        timestamp: new Date().toISOString(),
-        status: 'stopped',
-    };
+    const timestamp = new Date().toISOString();
 
-    playbackLog.push(logEntry);
-    movie.status = 'available';
+    try {
+        await db.run(
+            'INSERT INTO playback_log (movie_id, movie_name, action, timestamp, status) VALUES (?, ?, ?, ?, ?)',
+            [movie.id, movie.name, 'stop', timestamp, 'stopped']
+        );
 
-    console.log(`⏹ Playback stopped: "${movie.name}" (ID: ${movie.id}) at ${logEntry.timestamp}`);
+        await db.run('UPDATE movies SET status = ? WHERE id = ?', ['available', movie.id]);
 
-    res.json({
-        success: true,
-        message: `Playback stopped for "${movie.name}"`,
-        data: {
-            ...movie,
-            streamStatus: 'inactive',
-            playbackStopped: logEntry.timestamp,
-        },
-    });
+        console.log(`⏹ Playback stopped: "${movie.name}" (ID: ${movie.id}) at ${timestamp}`);
+
+        const updatedMovie = await db.get('SELECT * FROM movies WHERE id = ?', [movie.id]);
+
+        res.json({
+            success: true,
+            message: `Playback stopped for "${movie.name}"`,
+            data: {
+                ...updatedMovie,
+                streamStatus: 'inactive',
+                playbackStopped: timestamp,
+            },
+        });
+    } catch (error) {
+        console.error('Stop error:', error);
+        res.status(500).json({ success: false, error: 'Failed to stop playback' });
+    }
 });
 
 // GET /api/playback-log - Returns playback history
-app.get('/api/playback-log', (req, res) => {
-    res.json({
-        success: true,
-        count: playbackLog.length,
-        data: playbackLog.slice(-50),
-    });
+app.get('/api/playback-log', async (req, res) => {
+    try {
+        const logs = await db.all('SELECT * FROM playback_log ORDER BY id DESC LIMIT 50');
+        res.json({
+            success: true,
+            count: logs.length,
+            data: logs,
+        });
+    } catch (error) {
+        console.error('Error fetching logs:', error);
+        res.status(500).json({ success: false, error: 'Database error' });
+    }
 });
 
 // Health check
@@ -285,18 +298,76 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(PORT, () => {
-    console.log(`
-  ╔══════════════════════════════════════════╗
-  ║   🎬 Netflix Clone API Server           ║
-  ║   Running on http://localhost:${PORT}       ║
-  ║   Endpoints:                             ║
-  ║   GET  /api/movies                       ║
-  ║   GET  /api/movies/:id                   ║
-  ║   POST /api/play/:id                     ║
-  ║   POST /api/stop/:id                     ║
-  ║   GET  /api/playback-log                 ║
-  ║   GET  /api/health                       ║
-  ╚══════════════════════════════════════════╝
-  `);
-});
+// Initialize database and start server
+const initDbAndStartServer = async () => {
+    try {
+        db = await open({
+            filename: path.join(__dirname, 'database.sqlite'),
+            driver: sqlite3.Database
+        });
+
+        await db.exec(`
+            CREATE TABLE IF NOT EXISTS movies (
+                id INTEGER PRIMARY KEY,
+                name TEXT,
+                genre TEXT,
+                year INTEGER,
+                rating TEXT,
+                duration TEXT,
+                description TEXT,
+                logo TEXT,
+                streamUrl TEXT,
+                status TEXT DEFAULT 'available',
+                match INTEGER
+            )
+        `);
+
+        await db.exec(`
+            CREATE TABLE IF NOT EXISTS playback_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                movie_id INTEGER,
+                movie_name TEXT,
+                action TEXT,
+                timestamp TEXT,
+                status TEXT
+            )
+        `);
+
+        // Check if movies are empty, if so, populate initial data
+        const row = await db.get('SELECT COUNT(*) as count FROM movies');
+        if (row.count === 0) {
+            const stmt = await db.prepare(`
+                INSERT INTO movies (id, name, genre, year, rating, duration, description, logo, streamUrl, status, match)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+            for (const movie of initialMovies) {
+                await stmt.run(
+                    movie.id, movie.name, movie.genre, movie.year, movie.rating,
+                    movie.duration, movie.description, movie.logo, movie.streamUrl,
+                    movie.status, movie.match
+                );
+            }
+            await stmt.finalize();
+            console.log('Database initialized with initial movie data.');
+        }
+
+        app.listen(PORT, () => {
+            console.log(`
+            Netflix Clone API Server           
+            Running on http://localhost:${PORT}       
+            Endpoints:                             
+            GET  /movies                       
+            GET  /movies/:id                   
+            POST /play/:id                     
+            POST /stop/:id                     
+            GET  /api/playback-log                 
+            GET  /api/health                       
+            `);
+        });
+    } catch (error) {
+        console.error('Failed to initialize database:', error);
+        process.exit(1);
+    }
+};
+
+initDbAndStartServer();

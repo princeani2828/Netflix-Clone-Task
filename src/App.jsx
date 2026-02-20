@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
 import MovieRow from './components/MovieRow';
@@ -8,7 +9,7 @@ import Footer from './components/Footer';
 import useMovieStore from './store/useMovieStore';
 
 function App() {
-  const { movies, loading, error, currentlyPlaying, fetchMovies, watchedMovieIds } = useMovieStore();
+  const { movies, loading, error, fetchMovies, watchedMovieIds } = useMovieStore();
 
   useEffect(() => {
     fetchMovies();
@@ -44,37 +45,34 @@ function App() {
   const popularMovies = movies.filter(m => m.match >= 90);
   const newReleases = movies.filter(m => m.year >= 2012);
 
-  // Continue Watching — only movies the user has actually played, in watch order
   const continueWatchingMovies = watchedMovieIds
     .map(id => movies.find(m => m.id === id))
     .filter(Boolean);
 
+  const homeElement = (
+    <div>
+      <Navbar />
+      <main>
+        <HeroSection />
+        <div className="relative z-10 -mt-24 pb-12" id="movie-rows">
+          <MovieRow title="Top 10 in the World Today" movies={top10Movies} showRank />
+          <MovieRow title="Popular on Netflix" movies={popularMovies} />
+          <MovieRow title="New Releases" movies={newReleases} />
+          {continueWatchingMovies.length > 0 && (
+            <MovieRow title="Continue Watching" movies={continueWatchingMovies} />
+          )}
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-netflix-black" id="app-container">
-      {/* Full Screen Player (overlays everything when active) */}
-      {currentlyPlaying && <FullScreenPlayer />}
-
-      {/* Main Content (hidden when playing) */}
-      <div className={currentlyPlaying ? 'hidden' : ''}>
-        <Navbar />
-
-        <main>
-          {/* Hero Banner */}
-          <HeroSection />
-
-          {/* Movie Rows */}
-          <div className="relative z-10 -mt-24 pb-12" id="movie-rows">
-            <MovieRow title="Top 10 in India Today" movies={top10Movies} showRank />
-            <MovieRow title="Popular on Netflix" movies={popularMovies} />
-            <MovieRow title="New Releases" movies={newReleases} />
-            {continueWatchingMovies.length > 0 && (
-              <MovieRow title="Continue Watching" movies={continueWatchingMovies} />
-            )}
-          </div>
-        </main>
-
-        <Footer />
-      </div>
+      <Routes>
+        <Route path="/" element={homeElement} />
+        <Route path="/play/:id" element={<FullScreenPlayer />} />
+      </Routes>
     </div>
   );
 }
