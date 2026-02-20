@@ -1,0 +1,78 @@
+import { create } from 'zustand';
+import axios from 'axios';
+
+const API_BASE = '/api';
+
+const useMovieStore = create((set, get) => ({
+    // State
+    movies: [],
+    loading: true,
+    error: null,
+    currentlyPlaying: null, // movie being played fullscreen
+    hoveredMovieId: null,
+    playbackStatus: {}, // { [movieId]: 'available' | 'streaming' }
+
+    // Actions
+    fetchMovies: async () => {
+        try {
+            set({ loading: true, error: null });
+            const response = await axios.get(`${API_BASE}/movies`);
+            if (response.data.success) {
+                const movies = response.data.data;
+                const playbackStatus = {};
+                movies.forEach((m) => {
+                    playbackStatus[m.id] = m.status;
+                });
+                set({ movies, playbackStatus, loading: false });
+            }
+        } catch (error) {
+            console.error('Failed to fetch movies:', error);
+            set({
+                error: 'Failed to load movies. Please try again.',
+                loading: false,
+            });
+        }
+    },
+
+    setHoveredMovie: (movieId) => {
+        set({ hoveredMovieId: movieId });
+    },
+
+    playMovie: async (movie) => {
+        try {
+            // Call backend to simulate playback
+            await axios.post(`${API_BASE}/play/${movie.id}`);
+            set((state) => ({
+                currentlyPlaying: movie,
+                playbackStatus: {
+                    ...state.playbackStatus,
+                    [movie.id]: 'streaming',
+                },
+            }));
+        } catch (error) {
+            console.error('Failed to start playback:', error);
+            // Still play locally even if backend call fails
+            set({ currentlyPlaying: movie });
+        }
+    },
+
+    stopPlayback: async () => {
+        const { currentlyPlaying } = get();
+        if (currentlyPlaying) {
+            try {
+                await axios.post(`${API_BASE}/stop/${currentlyPlaying.id}`);
+            } catch (error) {
+                console.error('Failed to log stop:', error);
+            }
+            set((state) => ({
+                currentlyPlaying: null,
+                playbackStatus: {
+                    ...state.playbackStatus,
+                    [currentlyPlaying.id]: 'available',
+                },
+            }));
+        }
+    },
+}));
+
+export default useMovieStore;

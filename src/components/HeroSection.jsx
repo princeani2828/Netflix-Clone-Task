@@ -1,0 +1,126 @@
+import { useState, useEffect, useRef } from 'react';
+import useMovieStore from '../store/useMovieStore';
+
+export default function HeroSection() {
+    const { movies, playMovie } = useMovieStore();
+    const [heroMovie, setHeroMovie] = useState(null);
+    const videoRef = useRef(null);
+    const [videoReady, setVideoReady] = useState(false);
+    const [isMuted, setIsMuted] = useState(true);
+
+    useEffect(() => {
+        if (movies.length > 0) {
+            // Pick the highest match movie as featured
+            const featured = [...movies].sort((a, b) => b.match - a.match)[0];
+            setHeroMovie(featured);
+        }
+    }, [movies]);
+
+    useEffect(() => {
+        if (videoRef.current && heroMovie) {
+            videoRef.current.play().catch(() => { });
+        }
+    }, [heroMovie]);
+
+    if (!heroMovie) return null;
+
+    return (
+        <section className="hero-section" id="hero-section">
+            {/* Background Video */}
+            <div className="absolute inset-0">
+                {/* Poster/Fallback Image */}
+                <img
+                    src={heroMovie.logo}
+                    alt={heroMovie.name}
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${videoReady ? 'opacity-0' : 'opacity-100'}`}
+                />
+                <video
+                    ref={videoRef}
+                    src={heroMovie.streamUrl}
+                    muted={isMuted}
+                    loop
+                    playsInline
+                    autoPlay
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
+                    onLoadedData={() => setVideoReady(true)}
+                />
+                {/* Overlays */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-netflix-black via-transparent to-transparent" />
+            </div>
+
+            {/* Hero Content */}
+            <div className="relative z-10 max-w-xl animate-fade-in-up">
+                <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs font-bold text-netflix-red tracking-widest uppercase">
+                        Featured
+                    </span>
+                    <span className="match-badge text-sm">{heroMovie.match}% Match</span>
+                </div>
+
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 leading-tight">
+                    {heroMovie.name}
+                </h1>
+
+                <p className="text-sm md:text-base text-gray-300 mb-6 line-clamp-3 max-w-md">
+                    {heroMovie.description}
+                </p>
+
+                <div className="flex items-center gap-3 mb-4 flex-wrap">
+                    <span className="text-sm text-gray-400">{heroMovie.year}</span>
+                    <span className="text-sm text-gray-400">•</span>
+                    <span className="text-sm text-gray-400">{heroMovie.rating}</span>
+                    <span className="text-sm text-gray-400">•</span>
+                    <span className="text-sm text-gray-400">{heroMovie.duration}</span>
+                    <span className="genre-badge">{heroMovie.genre}</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <button
+                        className="play-btn text-base py-2.5 px-8"
+                        onClick={() => playMovie(heroMovie)}
+                        id="hero-play-btn"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z" />
+                        </svg>
+                        Play
+                    </button>
+                    <button
+                        className="flex items-center gap-2 py-2.5 px-6 bg-white/20 backdrop-blur-sm text-white border-none rounded font-semibold text-base cursor-pointer hover:bg-white/30 transition-all"
+                        id="hero-info-btn"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        More Info
+                    </button>
+                </div>
+            </div>
+
+            {/* Volume / Mute Toggle */}
+            <div className="absolute bottom-24 right-[4%] z-10">
+                <button
+                    className="volume-btn"
+                    onClick={() => {
+                        setIsMuted(!isMuted);
+                        if (videoRef.current) videoRef.current.muted = !isMuted;
+                    }}
+                    aria-label={isMuted ? 'Unmute' : 'Mute'}
+                    id="hero-mute-btn"
+                >
+                    {isMuted ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                        </svg>
+                    ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                        </svg>
+                    )}
+                </button>
+            </div>
+        </section>
+    );
+}
