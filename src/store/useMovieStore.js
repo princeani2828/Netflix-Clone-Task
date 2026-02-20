@@ -11,6 +11,7 @@ const useMovieStore = create((set, get) => ({
     currentlyPlaying: null, // movie being played fullscreen
     hoveredMovieId: null,
     playbackStatus: {}, // { [movieId]: 'available' | 'streaming' }
+    watchedMovieIds: [], // IDs of movies user has played (most recent first)
 
     // Actions
     fetchMovies: async () => {
@@ -48,11 +49,22 @@ const useMovieStore = create((set, get) => ({
                     ...state.playbackStatus,
                     [movie.id]: 'streaming',
                 },
+                // Add to watched list (most recent first, no duplicates)
+                watchedMovieIds: [
+                    movie.id,
+                    ...state.watchedMovieIds.filter((id) => id !== movie.id),
+                ],
             }));
         } catch (error) {
             console.error('Failed to start playback:', error);
             // Still play locally even if backend call fails
-            set({ currentlyPlaying: movie });
+            set((state) => ({
+                currentlyPlaying: movie,
+                watchedMovieIds: [
+                    movie.id,
+                    ...state.watchedMovieIds.filter((id) => id !== movie.id),
+                ],
+            }));
         }
     },
 

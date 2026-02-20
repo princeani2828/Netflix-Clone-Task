@@ -8,7 +8,7 @@ import Footer from './components/Footer';
 import useMovieStore from './store/useMovieStore';
 
 function App() {
-  const { movies, loading, error, currentlyPlaying, fetchMovies } = useMovieStore();
+  const { movies, loading, error, currentlyPlaying, fetchMovies, watchedMovieIds } = useMovieStore();
 
   useEffect(() => {
     fetchMovies();
@@ -40,9 +40,14 @@ function App() {
   }
 
   // Categorize movies into rows
-  const trendingMovies = movies.slice(0, 3);
-  const popularMovies = movies.slice(3, 6);
-  const newReleases = movies.slice(6, 9);
+  const top10Movies = movies.slice(0, 10);
+  const popularMovies = movies.filter(m => m.match >= 90);
+  const newReleases = movies.filter(m => m.year >= 2012);
+
+  // Continue Watching — only movies the user has actually played, in watch order
+  const continueWatchingMovies = watchedMovieIds
+    .map(id => movies.find(m => m.id === id))
+    .filter(Boolean);
 
   return (
     <div className="min-h-screen bg-netflix-black" id="app-container">
@@ -58,11 +63,13 @@ function App() {
           <HeroSection />
 
           {/* Movie Rows */}
-          <div className="relative z-10 -mt-16 pb-8" id="movie-rows">
-            <MovieRow title="🔥 Trending Now" movies={trendingMovies} />
-            <MovieRow title="⭐ Popular on Netflix" movies={popularMovies} />
-            <MovieRow title="🆕 New Releases" movies={newReleases} />
-            <MovieRow title="🎬 All Movies" movies={movies} />
+          <div className="relative z-10 -mt-24 pb-12" id="movie-rows">
+            <MovieRow title="Top 10 in India Today" movies={top10Movies} showRank />
+            <MovieRow title="Popular on Netflix" movies={popularMovies} />
+            <MovieRow title="New Releases" movies={newReleases} />
+            {continueWatchingMovies.length > 0 && (
+              <MovieRow title="Continue Watching" movies={continueWatchingMovies} />
+            )}
           </div>
         </main>
 

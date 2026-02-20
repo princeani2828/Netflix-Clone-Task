@@ -126,6 +126,19 @@ const movies = [
         status: 'available',
         match: 94,
     },
+    {
+        id: 10,
+        name: 'Subaru Outback',
+        genre: 'Adventure',
+        year: 2018,
+        rating: 'G',
+        duration: '30 sec',
+        description: 'A stunning cinematic showcase of the Subaru Outback conquering rugged terrain and breathtaking landscapes.',
+        logo: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/SubaruOutbackOnStreetAndDirt.jpg',
+        streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
+        status: 'available',
+        match: 81,
+    },
 ];
 
 // Playback log
@@ -134,9 +147,9 @@ const playbackLog = [];
 // Validation middleware
 const validateMovieId = (req, res, next) => {
     const { movieId } = req.params;
-    const id = parseInt(movieId, 10);
+    const id = Number.parseInt(movieId, 10);
 
-    if (isNaN(id) || id < 1) {
+    if (Number.isNaN(id) || id < 1) {
         return res.status(400).json({
             success: false,
             error: 'Invalid movie ID. Must be a positive integer.',
@@ -163,7 +176,8 @@ app.get('/api/movies', (req, res) => {
             count: movies.length,
             data: movies,
         });
-    } catch (error) {
+    } catch (err) {
+        console.error('Error fetching movies:', err);
         res.status(500).json({
             success: false,
             error: 'Internal server error while fetching movies.',

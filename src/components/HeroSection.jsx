@@ -86,34 +86,34 @@ export default function HeroSection() {
             </div>
 
             {/* Hero Content */}
-            <div className="relative z-10 max-w-xl animate-fade-in-up">
-                <div className="flex items-center gap-2 mb-3">
+            <div className="relative z-10 max-w-2xl text-left animate-fade-in-up">
+                <div className="flex items-center gap-3 mb-5">
                     <span className="text-xs font-bold text-netflix-red tracking-widest uppercase">
                         Featured
                     </span>
                     <span className="match-badge text-sm">{heroMovie.match}% Match</span>
                 </div>
 
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 leading-tight">
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-[1.05] tracking-tight">
                     {heroMovie.name}
                 </h1>
 
-                <p className="text-sm md:text-base text-gray-300 mb-6 line-clamp-3 max-w-md">
+                <p className="text-sm md:text-base text-gray-200 mb-7 line-clamp-3 max-w-lg font-normal leading-relaxed">
                     {heroMovie.description}
                 </p>
 
-                <div className="flex items-center gap-3 mb-4 flex-wrap">
-                    <span className="text-sm text-gray-400">{heroMovie.year}</span>
-                    <span className="text-sm text-gray-400">•</span>
-                    <span className="text-sm text-gray-400">{heroMovie.rating}</span>
-                    <span className="text-sm text-gray-400">•</span>
-                    <span className="text-sm text-gray-400">{heroMovie.duration}</span>
+                <div className="flex items-center gap-2.5 mb-8 flex-wrap">
+                    <span className="text-sm text-gray-300">{heroMovie.year}</span>
+                    <span className="text-sm text-gray-500">•</span>
+                    <span className="text-sm text-gray-300">{heroMovie.rating}</span>
+                    <span className="text-sm text-gray-500">•</span>
+                    <span className="text-sm text-gray-300">{heroMovie.duration}</span>
                     <span className="genre-badge">{heroMovie.genre}</span>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3" style={{ marginTop: '40px' }}>
                     <button
-                        className="play-btn text-base py-2.5 px-8"
+                        className="play-btn"
                         onClick={() => playMovie(heroMovie)}
                         id="hero-play-btn"
                     >
@@ -123,10 +123,10 @@ export default function HeroSection() {
                         Play
                     </button>
                     <button
-                        className="flex items-center gap-2 py-2.5 px-6 bg-white/20 backdrop-blur-sm text-white border-none rounded font-semibold text-base cursor-pointer hover:bg-white/30 transition-all"
+                        className="info-btn"
                         id="hero-info-btn"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         More Info

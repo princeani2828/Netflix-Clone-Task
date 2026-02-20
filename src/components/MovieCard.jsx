@@ -1,19 +1,25 @@
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import useMovieStore from '../store/useMovieStore';
 
-export default function MovieCard({ movie, index }) {
+export default function MovieCard({ movie, index, rank }) {
     const videoContainerRef = useRef(null);
     const playerRef = useRef(null);
     const hoverTimeoutRef = useRef(null);
     const [isHovered, setIsHovered] = useState(false);
     const [videoReady, setVideoReady] = useState(false);
     const [imageError, setImageError] = useState(false);
-    const { setHoveredMovie, playMovie, hoveredMovieId, playbackStatus } = useMovieStore();
+    const { setHoveredMovie, playMovie, hoveredMovieId, watchedMovieIds } = useMovieStore();
 
     const isCurrentlyHovered = hoveredMovieId === movie.id;
-    const status = playbackStatus[movie.id] || 'available';
+    const isWatched = watchedMovieIds.includes(movie.id);
+
+    // Simulated watch progress for "Continue Watching" style
+    const watchProgress = useMemo(() => {
+        const seed = movie.id * 17 + 23;
+        return (seed % 46) + 40; // 40% to 85%
+    }, [movie.id]);
 
     // Initialize Video.js player on hover
     useEffect(() => {
@@ -40,10 +46,6 @@ export default function MovieCard({ movie, index }) {
 
             playerRef.current = player;
         }
-
-        return () => {
-            // Don't dispose on every hover change — only on unmount
-        };
     }, [isHovered, movie.streamUrl]);
 
     // Play/pause based on hover state
@@ -88,7 +90,6 @@ export default function MovieCard({ movie, index }) {
     }, [setHoveredMovie]);
 
     const handleClick = useCallback(() => {
-        // Dispose preview player before going fullscreen
         if (playerRef.current && !playerRef.current.isDisposed()) {
             playerRef.current.dispose();
             playerRef.current = null;
@@ -98,99 +99,76 @@ export default function MovieCard({ movie, index }) {
         playMovie(movie);
     }, [movie, playMovie]);
 
-    const animationDelay = `${index * 0.08}s`;
-
     return (
         <div
-            className="movie-card animate-fade-in-up"
-            style={{ animationDelay }}
+            className="netflix-card group"
+            style={{ animationDelay: `${index * 0.06}s` }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             onClick={handleClick}
             id={`movie-card-${movie.id}`}
-            role="button"
             tabIndex={0}
             aria-label={`Play ${movie.name}`}
             onKeyDown={(e) => e.key === 'Enter' && handleClick()}
         >
-            {/* Thumbnail Image */}
-            {!imageError ? (
-                <img
-                    src={movie.logo}
-                    alt={movie.name}
-                    loading="lazy"
-                    className={`transition-opacity duration-500 ${isCurrentlyHovered && videoReady ? 'opacity-0' : 'opacity-100'}`}
-                    onError={() => setImageError(true)}
-                />
-            ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-netflix-card to-netflix-black flex items-center justify-center">
-                    <span className="text-lg font-bold text-white/50">{movie.name}</span>
+            {/* Rank Number */}
+            {rank && (
+                <div className="netflix-card-rank">
+                    <span className="netflix-rank-number" data-rank={rank}>
+                        {rank}
+                    </span>
                 </div>
             )}
 
-            {/* Video.js Preview Player */}
-            {isHovered && (
-                <div
-                    ref={videoContainerRef}
-                    className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${videoReady ? 'opacity-100' : 'opacity-0'
-                        } [&_.video-js]:w-full [&_.video-js]:h-full [&_.video-js_.vjs-tech]:object-cover [&_.video-js]:bg-transparent [&_.vjs-control-bar]:hidden`}
-                />
-            )}
+            {/* Poster */}
+            <div className="netflix-card-poster">
+                {/* Thumbnail */}
+                {!imageError ? (
+                    <img
+                        src={movie.logo}
+                        alt={movie.name}
+                        loading="lazy"
+                        className={`w-full h-full object-cover transition-opacity duration-500 ${isCurrentlyHovered && videoReady ? 'opacity-0' : 'opacity-100'
+                            }`}
+                        onError={() => setImageError(true)}
+                    />
+                ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-netflix-card to-netflix-black flex items-center justify-center">
+                        <span className="text-xs font-bold text-white/50 text-center px-1">{movie.name}</span>
+                    </div>
+                )}
 
-            {/* Status Indicator */}
-            <div className="absolute top-3 right-3 z-10">
-                <span className={`status-dot ${status}`} title={status} />
-            </div>
+                {/* Video.js Preview */}
+                {isHovered && (
+                    <div
+                        ref={videoContainerRef}
+                        className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${videoReady ? 'opacity-100' : 'opacity-0'
+                            } [&_.video-js]:w-full [&_.video-js]:h-full [&_.video-js_.vjs-tech]:object-cover [&_.video-js]:bg-transparent [&_.vjs-control-bar]:hidden`}
+                    />
+                )}
 
-            {/* Info Overlay */}
-            <div className="movie-card-info">
-                <h3 className="text-sm md:text-base font-bold text-white mb-1 line-clamp-1">
-                    {movie.name}
-                </h3>
-                <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="match-badge text-xs">{movie.match}% Match</span>
-                    <span className="text-xs text-gray-400">{movie.rating}</span>
-                    <span className="text-xs text-gray-400">{movie.duration}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="genre-badge">{movie.genre}</span>
-                    <span className="text-xs text-gray-500">{movie.year}</span>
+                {/* Hover overlay with info */}
+                <div className="netflix-card-overlay">
+                    <p className="text-white text-[11px] font-semibold leading-tight line-clamp-1">
+                        {movie.name}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                        <span className="text-[10px] text-green-400 font-bold">{movie.match}%</span>
+                        <span className="text-[10px] text-gray-400">{movie.rating}</span>
+                    </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-2 mt-3">
-                    <button
-                        className="play-btn text-xs py-1.5 px-3"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleClick();
-                        }}
-                        id={`play-btn-${movie.id}`}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M8 5v14l11-7z" />
-                        </svg>
-                        Play
-                    </button>
-                    <button
-                        className="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-white hover:border-white transition-colors bg-black/40"
-                        aria-label="Add to My List"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
-                    </button>
-                    <button
-                        className="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-white hover:border-white transition-colors bg-black/40"
-                        aria-label="Like"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                        </svg>
-                    </button>
-                </div>
+                {/* Continue Watching Progress Bar — only for actually watched movies */}
+                {isWatched && (
+                    <div className="absolute bottom-0 left-0 right-0 z-20">
+                        <div className="w-full h-[3px] bg-gray-600/80">
+                            <div
+                                className="h-full bg-netflix-red rounded-r-sm"
+                                style={{ width: `${watchProgress}%` }}
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
