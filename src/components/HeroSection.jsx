@@ -92,9 +92,6 @@ export default function HeroSection() {
                         Featured
                     </span>
                     <span className="match-badge text-sm">{heroMovie.match}% Match</span>
-                    <span className="text-[10px] font-bold text-white/50 bg-white/10 px-1.5 py-0.5 rounded">
-                        VLC.js
-                    </span>
                 </div>
 
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 leading-tight">

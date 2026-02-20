@@ -142,15 +142,6 @@ export default function MovieCard({ movie, index }) {
                 <span className={`status-dot ${status}`} title={status} />
             </div>
 
-            {/* VLC.js Badge (on hover) */}
-            {isCurrentlyHovered && videoReady && (
-                <div className="absolute top-3 left-3 z-10">
-                    <span className="text-[10px] font-bold text-white/60 bg-black/50 px-1.5 py-0.5 rounded backdrop-blur-sm">
-                        VLC.js
-                    </span>
-                </div>
-            )}
-
             {/* Info Overlay */}
             <div className="movie-card-info">
                 <h3 className="text-sm md:text-base font-bold text-white mb-1 line-clamp-1">

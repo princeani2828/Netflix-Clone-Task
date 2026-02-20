@@ -204,14 +204,6 @@ export default function FullScreenPlayer() {
                 className="absolute inset-0 w-full h-full [&_.video-js]:w-full [&_.video-js]:h-full [&_.video-js_.vjs-tech]:object-contain [&_.video-js]:bg-black"
             />
 
-            {/* Player Badge */}
-            <div className={`fixed top-5 right-5 z-[70] transition-all duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-full border border-white/10">
-                    <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-                    <span className="text-xs font-semibold text-white/80 tracking-wide">VLC.js Player</span>
-                </div>
-            </div>
-
             {/* Back Button (top-left, transparent) */}
             <button
                 className={`back-btn ${showControls ? 'visible' : ''}`}
