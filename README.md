@@ -10,7 +10,7 @@ A premium Netflix web application prototype built with **React 19**, **Vite 7**,
 
 ---
 
-## 🎬 Recent Player UI Refinements
+## Recent Player UI Refinements
 The latest update focused on creating a world-class "Netflix Original" viewing experience:
 - **Perfect Centering**: Refactored the playback controls into a balanced 3-column layout that stays perfectly centered on all screen sizes.
 - **Premium Aesthetics**: Re-designed the Play/Pause hub with semi-transparent black glassmorphism (`backdrop-blur`) and refined borders.
@@ -20,7 +20,7 @@ The latest update focused on creating a world-class "Netflix Original" viewing e
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## Tech Stack & Architecture
 
 ### Frontend
 | Technology | Role |
@@ -37,7 +37,7 @@ The latest update focused on creating a world-class "Netflix Original" viewing e
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 netflix-clone/
@@ -58,7 +58,7 @@ netflix-clone/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 1. **Install Dependencies**:
    ```bash
@@ -71,7 +71,7 @@ netflix-clone/
 
 ---
 
-## ⌨️ Player Keyboard Shortcuts
+## Player Keyboard Shortcuts
 | Key | Action |
 |-----|--------|
 | `Space` | Play / Pause |
@@ -83,7 +83,7 @@ netflix-clone/
 
 ---
 
-## ✨ Features Implemented
+## Features Implemented
 - [x] **Cinema-Grade Controls**: Centered, balanced playback hub with smooth hover transitions.
 - [x] **Glassmorphism UI**: Semi-transparent, blurred overlays for a premium feel.
 - [x] **Responsive Layout**: Adapts from mobile-first to 1920px+ "Theater Mode".
