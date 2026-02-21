@@ -146,7 +146,9 @@ body {
   overflow-y: visible;
   scroll-behavior: smooth;
   scroll-snap-type: x mandatory;
-  padding-bottom: 16px;
+  padding: 3rem 0;
+  margin: -3rem 0;
+  overflow: visible !important;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -165,6 +167,11 @@ body {
   scroll-snap-align: start;
   opacity: 0;
   animation: fadeInUp 0.5s ease-out forwards;
+  transition: z-index 0s;
+}
+
+.netflix-card:hover {
+  z-index: 1000 !important;
 }
 
 /* Rank number */
@@ -210,11 +217,13 @@ body {
 }
 
 .netflix-card:hover .netflix-card-poster {
-  transform: scale(1.08);
-  z-index: 20;
+  transform: scale(1.25) translateY(-10%);
+  z-index: 1001;
   box-shadow:
-    0 8px 30px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(229, 9, 20, 0.4);
+    0 25px 50px -12px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+  filter: brightness(1.1) contrast(1.05);
+  border-radius: 4px;
 }
 
 .netflix-card-poster img {
@@ -232,23 +241,23 @@ body {
   left: 0;
   right: 0;
   padding: 10px 8px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
+  background: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.7) 50%, transparent 100%);
   z-index: 10;
   opacity: 0;
-  transform: translateY(6px);
-  transition: all 0.3s ease;
+  transform: translateY(8px);
+  transition: all 0.4s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .netflix-card:hover .netflix-card-overlay {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(2px);
 }
 
 /* Cards WITHOUT rank (poster-only style) */
 .netflix-card:not(:has(.netflix-card-rank)) .netflix-card-poster {
-  width: 165px;
-  height: 93px;
-  border-radius: 4px;
+  width: 130px;
+  height: 190px;
+  border-radius: 6px;
 }
 
 /* Responsive sizes */
@@ -259,8 +268,8 @@ body {
   }
 
   .netflix-card:not(:has(.netflix-card-rank)) .netflix-card-poster {
-    width: 215px;
-    height: 121px;
+    width: 140px;
+    height: 200px;
   }
 
   .netflix-rank-number {
@@ -279,8 +288,8 @@ body {
   }
 
   .netflix-card:not(:has(.netflix-card-rank)) .netflix-card-poster {
-    width: 240px;
-    height: 135px;
+    width: 155px;
+    height: 220px;
   }
 
   .netflix-rank-number {
@@ -291,6 +300,55 @@ body {
   .netflix-row-scroll {
     gap: 12px;
   }
+}
+
+/* Search Results Grid */
+.search-results-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 480px) {
+  .search-results-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .search-results-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .search-results-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .search-results-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 20px;
+  }
+}
+
+/* Override card styles inside search grid */
+.search-results-grid .netflix-card {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+.search-results-grid .netflix-card-poster,
+.search-results-grid .netflix-card:not(:has(.netflix-card-rank)) .netflix-card-poster {
+  width: 100% !important;
+  height: 0 !important;
+  padding-bottom: 150%;
+  /* 2:3 poster aspect ratio */
+  border-radius: 6px;
 }
 
 /* Legacy grid (keeping for potential fallback) */
@@ -408,7 +466,7 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 40;
+  z-index: 200;
   padding: 16px 4%;
   display: flex;
   align-items: center;
@@ -430,7 +488,7 @@ body {
   display: flex;
   align-items: flex-end;
   padding: 0 4% 100px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .hero-section::after {
@@ -466,7 +524,13 @@ body {
 /* Section Row */
 .movie-row {
   padding: 0 4%;
-  margin-bottom: 56px;
+  margin-bottom: 3.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.movie-row:hover {
+  z-index: 500;
 }
 
 .movie-row h2 {
