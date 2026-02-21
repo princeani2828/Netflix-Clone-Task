@@ -414,8 +414,14 @@ body {
 /* Back Button in Player */
 .back-btn {
   position: fixed;
-  top: 20px;
-  left: 20px;
+  top: 32px;
+  left: 32px;
+
+  @media (min-width: 768px) {
+    top: 48px;
+    left: 48px;
+  }
+
   z-index: 100;
   display: flex;
   align-items: center;

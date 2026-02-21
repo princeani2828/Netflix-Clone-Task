@@ -12,6 +12,9 @@ const useMovieStore = create((set, get) => ({
     hoveredMovieId: null,
     playbackStatus: {}, // { [movieId]: 'available' | 'streaming' }
     watchedMovieIds: [], // IDs of movies user has played (most recent first)
+    searchQuery: '',
+    searchResults: [],
+    isSearching: false,
 
     // Actions
     fetchMovies: async () => {
@@ -84,6 +87,36 @@ const useMovieStore = create((set, get) => ({
                 },
             }));
         }
+    },
+
+    searchMovies: async (query) => {
+        set({ searchQuery: query });
+        if (!query || query.trim().length === 0) {
+            set({ searchResults: [], isSearching: false });
+            return;
+        }
+        set({ isSearching: true });
+        try {
+            const response = await axios.get(`${API_BASE}/movies/search`, {
+                params: { q: query },
+            });
+            // Only update if the query hasn't changed while we were fetching
+            if (get().searchQuery === query) {
+                set({
+                    searchResults: response.data.success ? response.data.data : [],
+                    isSearching: false,
+                });
+            }
+        } catch (error) {
+            console.error('Search failed:', error);
+            if (get().searchQuery === query) {
+                set({ searchResults: [], isSearching: false });
+            }
+        }
+    },
+
+    clearSearch: () => {
+        set({ searchQuery: '', searchResults: [], isSearching: false });
     },
 }));
 

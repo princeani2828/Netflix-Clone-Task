@@ -36,7 +36,7 @@ export default function FullScreenPlayer() {
         navigate(-1);
     }, [stopPlayback, navigate]);
 
-    const handleMouseMove = useCallback(() => {
+    const activityDetected = useCallback(() => {
         setShowControls(true);
         if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
         hideTimerRef.current = setTimeout(() => {
@@ -44,7 +44,8 @@ export default function FullScreenPlayer() {
         }, 3000);
     }, []);
 
-    const togglePlay = useCallback(() => {
+    const togglePlay = useCallback((e) => {
+        if (e) e.stopPropagation();
         const player = playerRef.current;
         if (player) {
             if (player.paused()) {
@@ -55,7 +56,8 @@ export default function FullScreenPlayer() {
         }
     }, []);
 
-    const toggleMute = useCallback(() => {
+    const toggleMute = useCallback((e) => {
+        if (e) e.stopPropagation();
         const player = playerRef.current;
         if (player) {
             player.muted(!player.muted());
@@ -71,14 +73,21 @@ export default function FullScreenPlayer() {
         }
     }, []);
 
-    const handleProgressClick = useCallback((e) => {
+    const seekTo = (e) => {
         const player = playerRef.current;
         if (player && duration) {
             const rect = e.currentTarget.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
+            // Handle both touch and mouse events
+            const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+            const clickX = clientX - rect.left;
             const newTime = (clickX / rect.width) * duration;
             player.currentTime(newTime);
         }
+    };
+
+    const handleProgressClick = useCallback((e) => {
+        e.stopPropagation();
+        seekTo(e);
     }, [duration]);
 
     const formatTime = (seconds) => {
@@ -92,8 +101,19 @@ export default function FullScreenPlayer() {
     useEffect(() => {
         if (!currentlyPlaying || !videoContainerRef.current) return;
 
+        // Clean up previous player if it exists
+        if (playerRef.current) {
+            playerRef.current.dispose();
+            playerRef.current = null;
+        }
+
         const videoElement = document.createElement('video-js');
-        videoElement.classList.add('vjs-big-play-centered');
+        videoElement.classList.add('vjs-big-play-centered', 'vjs-fill');
+        // Mobile optimization: playsinline is crucial for iOS autoplay/inline playback
+        videoElement.setAttribute('playsinline', 'true');
+        videoElement.setAttribute('webkit-playsinline', 'true');
+        videoElement.setAttribute('x5-playsinline', 'true');
+
         videoContainerRef.current.appendChild(videoElement);
 
         const player = videojs(videoElement, {
@@ -104,19 +124,24 @@ export default function FullScreenPlayer() {
             fill: true,
             preload: 'auto',
             playbackRates: [0.5, 1, 1.25, 1.5, 2],
+            userActions: {
+                doubleClick: false, // Disable default fullscreen on double click since we have custom controls
+                hotkeys: true
+            },
             sources: [{
                 src: currentlyPlaying.streamUrl,
                 type: 'video/mp4',
             }],
-            html5: {
-                vhs: {
-                    overrideNative: true,
-                },
-                nativeAudioTracks: false,
-                nativeVideoTracks: false,
-            },
         }, () => {
             console.log(`🎬 Video.js player ready — streaming "${currentlyPlaying.name}"`);
+            // Attempt to autoplay (browsers might block it if not muted)
+            const playPromise = player.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log("Autoplay blocked, waiting for user interaction", error);
+                    setIsPlaying(false);
+                });
+            }
         });
 
         // Event listeners
@@ -129,7 +154,9 @@ export default function FullScreenPlayer() {
         });
 
         player.on('progress', () => {
-            setBufferedPercent(player.bufferedPercent() * 100);
+            if (player.buffered().length > 0) {
+                setBufferedPercent(player.bufferedPercent() * 100);
+            }
         });
 
         player.on('play', () => setIsPlaying(true));
@@ -154,6 +181,8 @@ export default function FullScreenPlayer() {
         const handleKeyDown = (e) => {
             const player = playerRef.current;
             if (!player) return;
+
+            activityDetected(); // Show controls when key is pressed
 
             switch (e.key) {
                 case 'Escape':
@@ -195,7 +224,7 @@ export default function FullScreenPlayer() {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [handleBack, togglePlay, toggleMute]);
+    }, [handleBack, togglePlay, toggleMute, activityDetected]);
 
     // Cleanup timer
     useEffect(() => {
@@ -208,20 +237,21 @@ export default function FullScreenPlayer() {
 
     return (
         <div
-            className="fullscreen-player"
-            onMouseMove={handleMouseMove}
+            className="fullscreen-player select-none touch-none"
+            onMouseMove={activityDetected}
+            onTouchStart={activityDetected}
             onClick={togglePlay}
             id="fullscreen-player"
         >
             {/* Video.js Player Container */}
             <div
                 ref={videoContainerRef}
-                className="absolute inset-0 w-full h-full [&_.video-js]:w-full [&_.video-js]:h-full [&_.video-js_.vjs-tech]:object-contain [&_.video-js]:bg-black"
+                className="absolute inset-0 w-full h-full [&_.video-js]:w-full [&_.video-js]:h-full [&_.video-js_.vjs-tech]:object-contain [&_.video-js]:bg-black overflow-hidden"
             />
 
-            {/* Back Button (top-left, transparent) */}
+            {/* Back Button (top-left) */}
             <button
-                className={`back-btn ${showControls ? 'visible' : ''}`}
+                className={`back-btn ${showControls ? 'visible' : ''} active:scale-90 transition-transform`}
                 onClick={(e) => {
                     e.stopPropagation();
                     handleBack();
@@ -229,157 +259,161 @@ export default function FullScreenPlayer() {
                 id="back-button"
                 aria-label="Go back"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                Back
+                <span className="font-bold">Back</span>
             </button>
 
-            {/* Bottom Controls */}
+            {/* Bottom Controls Container */}
             <div
-                className={`fixed bottom-0 left-0 right-0 z-[60] transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                className={`fixed inset-x-0 bottom-0 z-[60] transition-all duration-500 ease-in-out ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'
                     }`}
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Gradient Background */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
+                {/* Visual Feedback: Dark Gradient Overlay */}
+                <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none" />
 
-                <div className="relative px-4 md:px-8 pb-6 pt-16">
-                    {/* Movie Title */}
-                    <div className="flex items-center justify-between mb-2">
-                        <h2 className="text-lg md:text-2xl font-bold text-white">
-                            {currentlyPlaying.name}
-                        </h2>
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs text-orange-400 font-semibold">● LIVE</span>
-                            <span className="text-xs text-gray-400 bg-white/10 px-2 py-0.5 rounded">
-                                {currentlyPlaying.rating}
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div
-                        className="w-full h-1 bg-white/20 rounded-full cursor-pointer group mb-4 hover:h-1.5 transition-all relative"
-                        onClick={handleProgressClick}
-                        id="progress-bar"
-                    >
-                        {/* Buffered */}
+                <div className="relative px-10 pb-12 md:px-24 md:pb-24 pt-10 max-w-[1920px] mx-auto">
+                    {/* Progress Bar with larger hit area for mobile */}
+                    <div className="mb-6 relative group h-6 flex items-center">
                         <div
-                            className="absolute h-full bg-white/20 rounded-full"
-                            style={{ width: `${bufferedPercent}%` }}
-                        />
-                        {/* Progress */}
-                        <div
-                            className="h-full bg-netflix-red rounded-full relative z-10 transition-all"
-                            style={{ width: `${progress}%` }}
+                            className="w-full h-1 bg-white/30 rounded-full cursor-pointer transition-all relative overflow-hidden group-hover:h-2"
+                            onClick={handleProgressClick}
+                            onTouchStart={handleProgressClick}
+                            id="progress-bar-container"
                         >
-                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-netflix-red rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" />
+                            {/* Buffered Amount */}
+                            <div
+                                className="absolute h-full bg-white/20 rounded-full transition-all duration-500"
+                                style={{ width: `${bufferedPercent}%` }}
+                            />
+                            {/* Progress Filled */}
+                            <div
+                                className="h-full bg-netflix-red relative z-10 transition-all duration-150"
+                                style={{ width: `${progress}%` }}
+                            >
+                                {/* Knob - Visible on hover or active */}
+                                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-4 h-4 bg-netflix-red rounded-full shadow-[0_0_15px_rgba(229,9,20,0.8)] scale-0 group-hover:scale-100 transition-transform" />
+                            </div>
                         </div>
                     </div>
 
-                    {/* Controls Row */}
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            {/* Play/Pause */}
-                            <button
-                                className="text-white hover:text-gray-300 transition-colors"
-                                onClick={togglePlay}
-                                aria-label={isPlaying ? 'Pause' : 'Play'}
-                                id="play-pause-btn"
-                            >
-                                {isPlaying ? (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                                    </svg>
-                                ) : (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M8 5v14l11-7z" />
-                                    </svg>
-                                )}
-                            </button>
+                    {/* Meta info & Controls Row - Refactored for centered playback controls */}
+                    <div className="flex flex-col gap-6 md:flex-row md:items-center">
+                        {/* Movie Info - Left */}
+                        <div className="flex-1 flex flex-col gap-3 order-2 md:order-1 md:pr-12">
+                            <h2 className="text-2xl md:text-4xl font-black text-white drop-shadow-2xl tracking-tight leading-tight">
+                                {currentlyPlaying.name}
+                            </h2>
+                            <div className="flex items-center gap-5 text-xs md:text-sm font-bold">
+                                <span className="text-green-500">98% Match</span>
+                                <span className="text-gray-400">{currentlyPlaying.year}</span>
+                                <span className="px-2.5 py-1 border border-white/20 text-white/60 rounded text-[10px] md:text-xs bg-white/5 uppercase tracking-wider">
+                                    {currentlyPlaying.rating}
+                                </span>
+                                <span className="text-gray-400">{currentlyPlaying.duration}</span>
+                            </div>
+                        </div>
 
-                            {/* Skip Back 10s */}
-                            <button
-                                className="text-white hover:text-gray-300 transition-colors hidden sm:block"
-                                onClick={() => playerRef.current && playerRef.current.currentTime(playerRef.current.currentTime() - 10)}
-                                aria-label="Rewind 10 seconds"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z" />
-                                </svg>
-                            </button>
-
-                            {/* Skip Forward 10s */}
-                            <button
-                                className="text-white hover:text-gray-300 transition-colors hidden sm:block"
-                                onClick={() => playerRef.current && playerRef.current.currentTime(playerRef.current.currentTime() + 10)}
-                                aria-label="Forward 10 seconds"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z" />
-                                </svg>
-                            </button>
-
-                            {/* Volume */}
-                            <div className="flex items-center gap-2 group/vol">
+                        {/* Main Playback Controls - Center */}
+                        <div className="flex items-center justify-center gap-8 md:gap-12 order-1 md:order-2">
+                            {/* Playback Controls Group */}
+                            <div className="flex items-center gap-8 md:gap-10">
+                                {/* Rewind 10 */}
                                 <button
-                                    className="text-white hover:text-gray-300 transition-colors"
-                                    onClick={toggleMute}
-                                    aria-label={isMuted ? 'Unmute' : 'Mute'}
-                                    id="mute-btn"
+                                    className="text-white hover:text-white/80 active:scale-90 transition-all flex flex-col items-center"
+                                    onClick={() => playerRef.current && playerRef.current.currentTime(playerRef.current.currentTime() - 10)}
+                                    title="Rewind 10s"
                                 >
-                                    {isMuted || volume === 0 ? (
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 md:w-10 md:h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                    <span className="text-[10px] font-bold mt-[-8px]">10</span>
+                                </button>
+
+                                {/* Main Play/Pause Button */}
+                                <button
+                                    className="bg-black/60 border border-white/20 text-white backdrop-blur-md w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-2xl"
+                                    onClick={togglePlay}
+                                    aria-label={isPlaying ? 'Pause' : 'Play'}
+                                    id="play-pause-btn"
+                                >
+                                    {isPlaying ? (
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 md:w-10 md:h-10" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                                         </svg>
                                     ) : (
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 md:w-10 md:h-10 ml-0.5 md:ml-1" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M8 5v14l11-7z" />
                                         </svg>
                                     )}
                                 </button>
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max="1"
-                                    step="0.05"
-                                    value={isMuted ? 0 : volume}
-                                    onChange={handleVolumeChange}
-                                    className="w-0 group-hover/vol:w-20 transition-all duration-300 accent-netflix-red cursor-pointer"
-                                    aria-label="Volume"
-                                    id="volume-slider"
-                                />
-                            </div>
 
-                            {/* Time */}
-                            <span className="text-sm text-gray-400 font-medium tabular-nums">
-                                {formatTime(currentTime)} / {formatTime(duration)}
-                            </span>
+                                {/* Forward 10 */}
+                                <button
+                                    className="text-white hover:text-white/80 active:scale-90 transition-all flex flex-col items-center"
+                                    onClick={() => playerRef.current && playerRef.current.currentTime(playerRef.current.currentTime() + 10)}
+                                    title="Forward 10s"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 md:w-10 md:h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                    <span className="text-[10px] font-bold mt-[-8px]">10</span>
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Right Controls */}
-                        <div className="flex items-center gap-3">
-                            <span className="text-xs text-gray-400 hidden sm:inline">
-                                {currentlyPlaying.genre} • {currentlyPlaying.year} • {currentlyPlaying.duration}
-                            </span>
-                            {/* Fullscreen Toggle */}
-                            <button
-                                className="text-white hover:text-gray-300 transition-colors"
-                                onClick={() => {
-                                    const player = playerRef.current;
-                                    if (player) {
-                                        if (player.isFullscreen()) player.exitFullscreen();
-                                        else player.requestFullscreen();
-                                    }
-                                }}
-                                aria-label="Toggle fullscreen"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                                </svg>
-                            </button>
+                        {/* Secondary Controls - Right */}
+                        <div className="flex-1 flex items-center justify-between md:justify-end gap-6 order-3">
+                            <div className="flex items-center gap-6">
+                                {/* Time display - Always visible */}
+                                <div className="text-sm md:text-base font-bold text-gray-200 tabular-nums pr-2">
+                                    {formatTime(currentTime)} <span className="text-gray-500 mx-1">/</span> {formatTime(duration)}
+                                </div>
+
+                                {/* Volume */}
+                                <div className="hidden md:flex items-center gap-2 group/vol">
+                                    <button
+                                        className="text-white hover:text-gray-300 transition-colors"
+                                        onClick={toggleMute}
+                                    >
+                                        {isMuted || volume === 0 ? (
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6h2.25l5.625-5.625v18.75L9 15.75H6.75A2.25 2.25 0 014.5 13.5v-3a2.25 2.25 0 012.25-2.25z" />
+                                            </svg>
+                                        ) : (
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                    <div className="w-0 overflow-hidden group-hover/vol:w-24 transition-all duration-300 ease-out">
+                                        <input
+                                            type="range" min="0" max="1" step="0.05"
+                                            value={isMuted ? 0 : volume}
+                                            onChange={handleVolumeChange}
+                                            className="w-full accent-white cursor-pointer h-1 rounded-full"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Fullscreen */}
+                                <button
+                                    className="text-white hover:scale-110 transition-all"
+                                    onClick={() => {
+                                        const player = playerRef.current;
+                                        if (player) {
+                                            if (player.isFullscreen()) player.exitFullscreen();
+                                            else player.requestFullscreen();
+                                        }
+                                    }}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -387,3 +421,4 @@ export default function FullScreenPlayer() {
         </div>
     );
 }
+
