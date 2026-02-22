@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import HeroSection from './components/HeroSection';
-import MovieRow from './components/MovieRow';
-import MovieCard from './components/MovieCard';
-import FullScreenPlayer from './components/FullScreenPlayer';
-import LoadingScreen from './components/LoadingScreen';
-import Footer from './components/Footer';
+import Navbar from './components/Navbar/Navbar';
+import HeroSection from './components/HeroSection/HeroSection';
+import MovieRow from './components/MovieRow/MovieRow';
+import MovieCard from './components/MovieCard/MovieCard';
+import FullScreenPlayer from './components/FullScreenPlayer/FullScreenPlayer';
+import LoadingScreen from './components/LoadingScreen/LoadingScreen';
+import Footer from './components/Footer/Footer';
 import useMovieStore from './store/useMovieStore';
 
 function App() {
@@ -24,7 +24,7 @@ function App() {
   // Show error screen
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-netflix-black" id="error-screen">
+      <div className="flex items-center justify-center bg-netflix-black" id="error-screen">
         <div className="text-center p-8">
           <div className="text-6xl mb-4">🎬</div>
           <h2 className="text-2xl font-bold text-white mb-2">Something went wrong</h2>
@@ -46,7 +46,7 @@ function App() {
   const newAndPopular = movies.filter(m => m.match >= 90);
   const newReleases = movies.filter(m => m.year >= 2012);
   const tvShows = movies.filter(m => m.duration?.includes('Season'));
-  const moviesOnly = movies.filter(m => !m.duration?.includes('Season'));
+
 
   const continueWatchingMovies = watchedMovieIds
     .map(id => movies.find(m => m.id === id))
@@ -60,7 +60,7 @@ function App() {
       <main>
         {isSearchActive ? (
           /* Search Results View */
-          <div className="pb-16 px-[4%] min-h-screen" style={{ paddingTop: '140px' }} id="search-results">
+          <div className="pb-16 px-[4%]" style={{ paddingTop: '140px' }} id="search-results">
             <div className="mb-10">
               <h2 className="text-xl md:text-2xl font-semibold text-netflix-light">
                 {isSearching ? (
@@ -119,7 +119,7 @@ function App() {
   );
 
   return (
-    <div className="min-h-screen bg-netflix-black" id="app-container">
+    <div className="bg-netflix-black" id="app-container">
       <Routes>
         <Route path="/" element={homeElement} />
         <Route path="/play/:id" element={<FullScreenPlayer />} />

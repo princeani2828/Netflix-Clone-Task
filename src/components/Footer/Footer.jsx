@@ -29,7 +29,7 @@ export default function Footer() {
     ];
 
     return (
-        <footer className="w-full mt-24 bg-black/40 pt-16 pb-8 px-[4%]">
+        <footer className="w-full mt-8 md:mt-24 bg-black/40 pt-10 md:pt-16 pb-6 px-[4%]">
             <div className="max-w-screen-2xl mx-auto">
                 <div className="flex flex-col gap-10">
                     <div className="flex items-center justify-between border-b border-white/5 pb-8">
@@ -48,9 +48,6 @@ export default function Footer() {
                                     </div>
                                 </a>
                             ))}
-                        </div>
-                        <div className="hidden sm:block">
-                            <span className="text-netflix-red font-black text-2xl tracking-tighter uppercase italic opacity-80 select-none">Netflix</span>
                         </div>
                     </div>
 

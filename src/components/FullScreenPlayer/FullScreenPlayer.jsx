@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-import useMovieStore from '../store/useMovieStore';
+import useMovieStore from '../../store/useMovieStore';
 
 export default function FullScreenPlayer() {
     const { id } = useParams();

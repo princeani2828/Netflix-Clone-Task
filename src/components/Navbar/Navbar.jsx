@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import useMovieStore from '../store/useMovieStore';
+import useMovieStore from '../../store/useMovieStore';
 
 export default function Navbar() {
     const [scrolled, setScrolled] = useState(false);
@@ -31,6 +31,8 @@ export default function Navbar() {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [searchQuery]);
+
+
 
     // Focus input when opened
     useEffect(() => {
@@ -354,6 +356,8 @@ export default function Navbar() {
                             </svg>
                         </button>
                     </div>
+
+
 
                     <button
                         className="text-gray-300 hover:text-white transition-colors"
