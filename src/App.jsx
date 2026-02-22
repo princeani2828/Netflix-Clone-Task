@@ -10,7 +10,7 @@ import Footer from './components/Footer/Footer';
 import useMovieStore from './store/useMovieStore';
 
 function App() {
-  const { movies, loading, error, fetchMovies, watchedMovieIds, searchQuery, searchResults, isSearching } = useMovieStore();
+  const { movies, loading, error, fetchMovies, watchedMovieIds, myList, searchQuery, searchResults, isSearching } = useMovieStore();
 
   useEffect(() => {
     fetchMovies();
@@ -49,6 +49,10 @@ function App() {
 
 
   const continueWatchingMovies = watchedMovieIds
+    .map(id => movies.find(m => m.id === id))
+    .filter(Boolean);
+
+  const myListMovies = myList
     .map(id => movies.find(m => m.id === id))
     .filter(Boolean);
 
@@ -102,6 +106,9 @@ function App() {
           <>
             <HeroSection />
             <div className="relative -mt-24 pb-12" id="movie-rows">
+              {myListMovies.length > 0 && (
+                <MovieRow title="My List" movies={myListMovies} />
+              )}
               <MovieRow title="Top 10 in the World Today" movies={top10Movies} showRank />
               <MovieRow title="New Releases" movies={[...newReleases].reverse()} />
               <MovieRow title="TV Shows" movies={tvShows} />

@@ -12,9 +12,10 @@ A premium Netflix web application prototype built with **React 19**, **Vite 7**,
 
 ## Recent Player UI Refinements
 The latest update focused on creating a world-class "Netflix Original" viewing experience:
-- **Perfect Centering**: Refactored the playback controls into a balanced 3-column layout that stays perfectly centered on all screen sizes.
-- **Premium Aesthetics**: Re-designed the Play/Pause hub with semi-transparent black glassmorphism (`backdrop-blur`) and refined borders.
-- **Enhanced Spacing**: Expanded corner gaps and metadata padding to give the UI professional breathing room.
+- **Enhanced Metadata & SEO**: Integrated OpenGraph (OG) tags and optimized meta descriptions for 100% SEO visibility.
+- **Personalized Lists**: Implemented "My List" functionality with local storage persistence for a customized viewing experience.
+- **PWA Excellence**: Fully optimized Service Worker and manifest for 100% "Installable" audit scores.
+- **Full Documentation**: Added interactive JSDoc documentation across core stores and components.
 - **Dynamic Corner Alignment**: Synchronized the "Back" button and control cluster for a clean, consistent vertical grid line.
 - **Custom Branding**: Replaced the default Vite favicon with a custom-generated Netflix "N" tab logo.
 

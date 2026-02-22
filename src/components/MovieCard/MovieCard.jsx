@@ -4,6 +4,15 @@ import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import useMovieStore from '../../store/useMovieStore';
 
+/**
+ * MovieCard Component
+ * Displays a movie poster with interactive hover preview using Video.js
+ * 
+ * @param {Object} props
+ * @param {Object} props.movie - Movie data object
+ * @param {number} props.index - Index for animation staggering
+ * @param {number} [props.rank] - Optional rank number for Top 10 rows
+ */
 export default function MovieCard({ movie, index, rank }) {
     const navigate = useNavigate();
     const videoContainerRef = useRef(null);
@@ -12,10 +21,11 @@ export default function MovieCard({ movie, index, rank }) {
     const [isHovered, setIsHovered] = useState(false);
     const [videoReady, setVideoReady] = useState(false);
     const [imageError, setImageError] = useState(false);
-    const { setHoveredMovie, playMovie, hoveredMovieId, watchedMovieIds } = useMovieStore();
+    const { setHoveredMovie, playMovie, hoveredMovieId, watchedMovieIds, myList, toggleMyList } = useMovieStore();
 
     const isCurrentlyHovered = hoveredMovieId === movie.id;
     const isWatched = watchedMovieIds.includes(movie.id);
+    const isInMyList = myList.includes(movie.id);
 
     // Simulated watch progress for "Continue Watching" style
     const watchProgress = useMemo(() => {
@@ -102,6 +112,11 @@ export default function MovieCard({ movie, index, rank }) {
         navigate(`/play/${movie.id}`);
     }, [movie, playMovie, navigate]);
 
+    const handleToggleList = (e) => {
+        e.stopPropagation();
+        toggleMyList(movie.id);
+    };
+
     return (
         <div
             className="netflix-card group"
@@ -152,9 +167,19 @@ export default function MovieCard({ movie, index, rank }) {
 
                 {/* Hover overlay with info */}
                 <div className="netflix-card-overlay">
-                    <p className="text-white text-[11px] font-semibold leading-tight line-clamp-1">
-                        {movie.name}
-                    </p>
+                    <div className="flex justify-between items-start mb-1">
+                        <p className="text-white text-[11px] font-semibold leading-tight line-clamp-1 flex-1">
+                            {movie.name}
+                        </p>
+                        <button
+                            onClick={handleToggleList}
+                            className={`ml-1 text-[14px] leading-none transition-transform active:scale-90 ${isInMyList ? 'text-netflix-red' : 'text-white/70 hover:text-white'
+                                }`}
+                            title={isInMyList ? "Remove from List" : "Add to My List"}
+                        >
+                            {isInMyList ? '✓' : '+'}
+                        </button>
+                    </div>
                     <div className="flex items-center gap-1.5 mt-1">
                         <span className="text-[10px] text-green-400 font-bold">{movie.match}%</span>
                         <span className="text-[10px] text-gray-400">{movie.rating}</span>

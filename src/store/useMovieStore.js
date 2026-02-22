@@ -3,8 +3,12 @@ import axios from 'axios';
 
 const API_BASE = '/api';
 
+/**
+ * Global Movie Store using Zustand
+ * Manages movie data, playback state, search, and user lists
+ */
 const useMovieStore = create((set, get) => ({
-    // State
+    // --- State ---
     movies: [],
     loading: true,
     error: null,
@@ -12,11 +16,14 @@ const useMovieStore = create((set, get) => ({
     hoveredMovieId: null,
     playbackStatus: {}, // { [movieId]: 'available' | 'streaming' }
     watchedMovieIds: [], // IDs of movies user has played (most recent first)
+    myList: [], // IDs of movies in user's wishlist
     searchQuery: '',
     searchResults: [],
     isSearching: false,
 
-    // Actions
+    // --- Actions ---
+
+    /** Fetches all movies from the backend API */
     fetchMovies: async () => {
         try {
             set({ loading: true, error: null });
@@ -27,7 +34,12 @@ const useMovieStore = create((set, get) => ({
                 movies.forEach((m) => {
                     playbackStatus[m.id] = m.status;
                 });
-                set({ movies, playbackStatus, loading: false });
+
+                // Load My List from local storage if available for persistence
+                const savedList = localStorage.getItem('netflix_mylist');
+                const myList = savedList ? JSON.parse(savedList) : [];
+
+                set({ movies, playbackStatus, myList, loading: false });
             }
         } catch (error) {
             console.error('Failed to fetch movies:', error);
@@ -38,10 +50,25 @@ const useMovieStore = create((set, get) => ({
         }
     },
 
+    /** Toggles a movie in the user's personal list */
+    toggleMyList: (movieId) => {
+        set((state) => {
+            const newList = state.myList.includes(movieId)
+                ? state.myList.filter(id => id !== movieId)
+                : [...state.myList, movieId];
+
+            // Persist to local storage
+            localStorage.setItem('netflix_mylist', JSON.stringify(newList));
+            return { myList: newList };
+        });
+    },
+
+    /** Updates hover state for row animations */
     setHoveredMovie: (movieId) => {
         set({ hoveredMovieId: movieId });
     },
 
+    /** Initiates movie playback and logs it to the backend */
     playMovie: async (movie) => {
         try {
             // Call backend to simulate playback
@@ -89,6 +116,7 @@ const useMovieStore = create((set, get) => ({
         }
     },
 
+    /** Searches movies by query and updates searchResults */
     searchMovies: async (query) => {
         set({ searchQuery: query });
         if (!query || query.trim().length === 0) {
