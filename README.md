@@ -85,6 +85,9 @@ netflix-clone/
 ---
 
 ## Features Implemented
+- [x] **My List & Persistence**: Direct list management with LocalStorage caching.
+- [x] **SEO & Meta Optimization**: Full OpenGraph support for professional social previews.
+- [x] **Progressive Web App (PWA)**: 100% installable on iOS, Android, and Desktop.
 - [x] **Cinema-Grade Controls**: Centered, balanced playback hub with smooth hover transitions.
 - [x] **Glassmorphism UI**: Semi-transparent, blurred overlays for a premium feel.
 - [x] **Responsive Layout**: Adapts from mobile-first to 1920px+ "Theater Mode".
