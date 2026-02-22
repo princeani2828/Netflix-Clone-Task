@@ -1,6 +1,6 @@
-# Netflix Clone - Premium Web App Prototype
+# Netflix Clone - Web App Prototype
 
-A state-of-the-art Netflix web application prototype engineered with **React 19**, **Vite 7**, **Tailwind CSS 4**, and a robust **Node.js/SQLite** backend. This prototype delivers a cinema-grade viewing experience with a high-performance media engine, interactive previews, and persistent user data.
+A state-of-the-art Netflix web application prototype engineered with **React 19**, **Vite 7**, **Tailwind CSS 4**, and a robust **Node.js/SQLite** backend. This prototype delivers a great viewing experience with a high-performance media engine and interactive previews.
 
 ![React](https://img.shields.io/badge/React-19.2-blue?logo=react&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-7.3-purple?logo=vite&logoColor=white)
@@ -10,7 +10,7 @@ A state-of-the-art Netflix web application prototype engineered with **React 19*
 
 ---
 
-## 🚀 What's New: The "Cinema-Ready" Update
+## What's New: The "Cinema-Ready" Update
 The latest iteration elevates the prototype from a static UI to a functional ecosystem:
 - **Persistent Data Layer**: Migrated from volatile in-memory storage to a reliable **SQLite** database with automated seeding.
 - **Advanced Search API**: Implemented SQL-powered search functionality across titles, genres, and descriptions.
@@ -20,7 +20,7 @@ The latest iteration elevates the prototype from a static UI to a functional eco
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## Tech Stack & Architecture
 
 ### Frontend
 - **Framework**: React 19 (using the latest `use` and Concurrent features)
@@ -35,7 +35,7 @@ The latest iteration elevates the prototype from a static UI to a functional eco
 
 ---
 
-## 📡 API Documentation
+## API Documentation
 
 The backend serves as a high-performance REST API on port `5000`.
 
@@ -50,13 +50,13 @@ The backend serves as a high-performance REST API on port `5000`.
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```bash
 netflix-clone/
 ├── src/
 │   ├── components/
-│   │   ├── VideoPlayer/     # Pro-grade VLC.js wrapper & centered controls
+│   │   ├── VideoPlayer/     # VLC.js wrapper & centered controls
 │   │   ├── MovieCard/       # Hover-to-preview logic & metadata overlays
 │   │   └── Navbar/Footer/   # Globally synced branding & navigation
 │   ├── store/               # Zustand state for persistence & movie data
@@ -70,7 +70,7 @@ netflix-clone/
 
 ---
 
-## ⌨️ Player Shortcuts
+## Player Shortcuts
 | Key | Action |
 |-----|--------|
 | `Space` | Play / Pause |
@@ -82,7 +82,7 @@ netflix-clone/
 
 ---
 
-## 🏁 Getting Started
+## Getting Started
 
 1. **Install Dependencies**:
    ```bash
@@ -101,7 +101,7 @@ netflix-clone/
 
 ---
 
-## ✅ Core Features Implemented
+## Core Features Implemented
 - [x] **Universal Search**: Fast, database-driven search engine.
 - [x] **My List Persistence**: LocalStorage-synced personal watchlists.
 - [x] **Adaptive Player**: Centered, responsive controls with glassmorphism UI.
