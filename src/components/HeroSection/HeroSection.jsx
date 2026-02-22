@@ -2,12 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-import useMovieStore from '../store/useMovieStore';
+import useMovieStore from '../../store/useMovieStore';
 
 export default function HeroSection() {
     const navigate = useNavigate();
     const { movies, playMovie } = useMovieStore();
-    const [heroMovie, setHeroMovie] = useState(null);
+    const [heroMovies, setHeroMovies] = useState([]);
+    const [currentIndex, setCurrentIndex] = useState(0);
     const videoContainerRef = useRef(null);
     const [videoReady, setVideoReady] = useState(false);
     const [isMuted, setIsMuted] = useState(true);
@@ -15,16 +16,24 @@ export default function HeroSection() {
 
     useEffect(() => {
         if (movies.length > 0) {
-            // Force Big Buck Bunny (ID: 1) as the hero preview video
-            const featured = movies.find(m => m.id === 1) || movies[0];
-            setHeroMovie(featured);
+            // Feature Avatar (ID 1), Spider-Man (ID 21), and Stranger Things (ID 2)
+            const ids = [1, 21, 2];
+            const featured = ids.map(id => movies.find(m => m.id === id)).filter(Boolean);
+            if (featured.length === 0) {
+                setHeroMovies(movies.slice(0, 3));
+            } else {
+                setHeroMovies(featured);
+            }
         }
     }, [movies]);
+
+    const heroMovie = heroMovies[currentIndex];
 
     // Initialize Video.js for hero background
     useEffect(() => {
         if (!heroMovie || !videoContainerRef.current) return;
 
+        setVideoReady(false);
         const videoElement = document.createElement('video-js');
         videoContainerRef.current.innerHTML = '';
         videoContainerRef.current.appendChild(videoElement);
@@ -32,7 +41,7 @@ export default function HeroSection() {
         const player = videojs(videoElement, {
             autoplay: true,
             controls: false,
-            muted: true,
+            muted: isMuted,
             loop: true,
             preload: 'auto',
             fluid: false,
@@ -56,6 +65,17 @@ export default function HeroSection() {
         };
     }, [heroMovie]);
 
+    // Auto-cycle through hero movies
+    useEffect(() => {
+        if (heroMovies.length <= 1) return;
+
+        const interval = setInterval(() => {
+            setCurrentIndex(prev => (prev + 1) % heroMovies.length);
+        }, 15000); // Switch every 15 seconds
+
+        return () => clearInterval(interval);
+    }, [heroMovies]);
+
     const toggleMute = () => {
         const player = playerRef.current;
         if (player && !player.isDisposed()) {
@@ -72,14 +92,23 @@ export default function HeroSection() {
         }
     };
 
+    const nextHero = () => {
+        setCurrentIndex(prev => (prev + 1) % heroMovies.length);
+    };
+
+    const prevHero = () => {
+        setCurrentIndex(prev => (prev - 1 + heroMovies.length) % heroMovies.length);
+    };
+
     if (!heroMovie) return null;
 
     return (
-        <section className="hero-section" id="hero-section">
+        <section className="hero-section group" id="hero-section">
             {/* Background Video via Video.js */}
             <div className="absolute inset-0">
                 {/* Poster/Fallback Image */}
                 <img
+                    key={`poster-${heroMovie.id}`}
                     src={heroMovie.logo}
                     alt={heroMovie.name}
                     className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${videoReady ? 'opacity-0' : 'opacity-100'}`}
@@ -96,7 +125,7 @@ export default function HeroSection() {
             </div>
 
             {/* Hero Content */}
-            <div className="relative z-10 max-w-2xl text-left animate-fade-in-up">
+            <div className="relative z-10 max-w-2xl text-left animate-fade-in-up" key={`content-${heroMovie.id}`}>
                 <div className="flex items-center gap-3 mb-5">
                     <span className="text-xs font-bold text-netflix-red tracking-widest uppercase">
                         Featured
@@ -144,8 +173,40 @@ export default function HeroSection() {
                 </div>
             </div>
 
+            {/* Navigation Arrows */}
+            <button
+                onClick={prevHero}
+                className="absolute left-[1%] top-1/2 -translate-y-1/2 z-30 text-white/40 hover:text-white transition-all duration-300 group/prev"
+                aria-label="Previous preview"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 transform group-hover/prev:scale-125 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <button
+                onClick={nextHero}
+                className="absolute right-[1%] top-1/2 -translate-y-1/2 z-30 text-white/40 hover:text-white transition-all duration-300 group/next"
+                aria-label="Next preview"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 transform group-hover/next:scale-125 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+
+            {/* Slider Dots */}
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                {heroMovies.map((m, idx) => (
+                    <button
+                        key={m.id}
+                        onClick={() => setCurrentIndex(idx)}
+                        className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${idx === currentIndex ? 'bg-netflix-red w-8' : 'bg-gray-500 hover:bg-gray-400'}`}
+                        aria-label={`Go to slide ${idx + 1}`}
+                    />
+                ))}
+            </div>
+
             {/* Volume / Mute Toggle */}
-            <div className="absolute bottom-24 right-[4%] z-10">
+            <div className="absolute bottom-24 right-[4%] z-10 flex items-center gap-4">
                 <button
                     className="volume-btn"
                     onClick={toggleMute}

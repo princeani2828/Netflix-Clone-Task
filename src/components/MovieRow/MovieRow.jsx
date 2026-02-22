@@ -1,4 +1,4 @@
-import MovieCard from './MovieCard';
+import MovieCard from '../MovieCard/MovieCard';
 
 export default function MovieRow({ title, movies, showRank = false }) {
     if (!movies || movies.length === 0) return null;

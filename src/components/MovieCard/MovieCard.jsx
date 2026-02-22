@@ -2,7 +2,7 @@ import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-import useMovieStore from '../store/useMovieStore';
+import useMovieStore from '../../store/useMovieStore';
 
 export default function MovieCard({ movie, index, rank }) {
     const navigate = useNavigate();
