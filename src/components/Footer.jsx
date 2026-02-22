@@ -1,27 +1,4 @@
 export default function Footer() {
-    const linkColumns = [
-        [
-            { label: 'Audio and Subtitles', id: 'audio-subtitles' },
-            { label: 'Media Center', id: 'media-center' },
-            { label: 'Privacy', id: 'privacy' },
-        ],
-        [
-            { label: 'Audio Description', id: 'audio-desc' },
-            { label: 'Investor Relations', id: 'investor' },
-            { label: 'Legal Notices', id: 'legal' },
-        ],
-        [
-            { label: 'Help Center', id: 'help' },
-            { label: 'Jobs', id: 'jobs' },
-            { label: 'Corporate Information', id: 'corp' },
-        ],
-        [
-            { label: 'Gift Cards', id: 'gift' },
-            { label: 'Terms of Use', id: 'terms' },
-            { label: 'Contact Us', id: 'contact' },
-        ],
-    ];
-
     const socials = [
         {
             label: 'Facebook',
@@ -45,15 +22,18 @@ export default function Footer() {
         },
     ];
 
-    return (
-        <footer className="relative mt-16 bg-[#141414]" id="footer">
-            <div className="px-[4%] pt-16 pb-12">
-                <div className="max-w-[980px] mx-auto">
+    const links = [
+        "FAQ", "Investor Relations", "Privacy", "Speed Test",
+        "Help Center", "Jobs", "Cookie Preference", "Legal Notices",
+        "Account", "Ways to Watch", "Corporate Information", "iOS", "Android"
+    ];
 
-                    {/* Top Row: Social Icons and Copyright in a split flex container */}
-                    <div className="flex justify-between items-center mb-6">
-                        {/* Social Icons - Left Side */}
-                        <div className="flex items-center gap-7">
+    return (
+        <footer className="w-full mt-24 bg-black/40 pt-16 pb-8 px-[4%]">
+            <div className="max-w-screen-2xl mx-auto">
+                <div className="flex flex-col gap-10">
+                    <div className="flex items-center justify-between border-b border-white/5 pb-8">
+                        <div className="flex items-center gap-6">
                             {socials.map((s) => (
                                 <a
                                     key={s.label}
@@ -61,7 +41,7 @@ export default function Footer() {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label={s.label}
-                                    className="text-[#808080] hover:text-[#b3b3b3] transition-colors duration-200"
+                                    className="text-[#808080] hover:text-white transition-all duration-300 hover:scale-110"
                                 >
                                     <div className="w-6 h-6">
                                         {s.icon}
@@ -69,33 +49,41 @@ export default function Footer() {
                                 </a>
                             ))}
                         </div>
-
-                        {/* Copyright - Right Side */}
-                        <div className="text-right">
-                            <p className="text-[13px] text-[#808080] font-medium opacity-80 leading-tight">© 1997-2018 Netflix, Inc.</p>
-                            <p className="text-[11px] text-[#808080] opacity-60 leading-tight mt-1">Carlos Avila © 2018</p>
+                        <div className="hidden sm:block">
+                            <span className="text-netflix-red font-black text-2xl tracking-tighter uppercase italic opacity-80 select-none">Netflix</span>
                         </div>
                     </div>
 
-                    {/* Bottom Section: Links Grid - Distributed beneath */}
-                    <div className="grid grid-cols-4 gap-4">
-                        {linkColumns.map((col, ci) => (
-                            <ul key={ci} className="flex flex-col gap-4">
-                                {col.map((link) => (
-                                    <li key={link.id}>
-                                        <a
-                                            href="#"
-                                            className="text-[13px] text-[#808080] hover:underline whitespace-nowrap"
-                                            id={`footer-${link.id}`}
-                                        >
-                                            {link.label}
-                                        </a>
-                                    </li>
-                                ))}
-                            </ul>
+                    <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-y-6 gap-x-4 list-none p-0 w-full mb-4">
+                        {links.map((link) => (
+                            <li
+                                key={link}
+                                className="text-left cursor-pointer text-[#808080] hover:text-white transition-colors duration-200 text-[13px] hover:underline"
+                            >
+                                {link}
+                            </li>
                         ))}
-                    </div>
+                    </ul>
 
+                    <div className="flex flex-col md:flex-row items-start md:items-end justify-between pt-8 border-t border-white/5 gap-8">
+                        <div className="flex flex-col gap-6">
+                            <div className="group relative inline-block">
+                                <div className="border border-[#808080] px-6 py-2 cursor-pointer transition-all duration-300 hover:border-white hover:text-white text-[14px] flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                                    </svg>
+                                    English
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col items-start md:items-end gap-1.5">
+                            <p className="text-[13px] text-[#808080] font-medium opacity-80 leading-tight">© 1997-2026 Netflix, Inc.</p>
+                            <p className="text-[11px] text-[#808080] opacity-50 leading-tight">Netflix India Private Limited</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </footer>
