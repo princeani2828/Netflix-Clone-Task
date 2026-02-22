@@ -1,95 +1,111 @@
-# Netflix Clone - Web App Prototype
+# Netflix Clone - Premium Web App Prototype
 
-A premium Netflix web application prototype built with **React 19**, **Vite 7**, **Tailwind CSS 4**, and **Video.js (VLC.js)**. This prototype features a cinema-grade media player with professional controls, interactive movie previews, and a state-of-the-art dark theme.
+A state-of-the-art Netflix web application prototype engineered with **React 19**, **Vite 7**, **Tailwind CSS 4**, and a robust **Node.js/SQLite** backend. This prototype delivers a cinema-grade viewing experience with a high-performance media engine, interactive previews, and persistent user data.
 
-![React](https://img.shields.io/badge/React-19-blue?logo=react)
-![Vite](https://img.shields.io/badge/Vite-7-purple?logo=vite)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-blue?logo=tailwindcss)
-![Video.js](https://img.shields.io/badge/Video.js%20(VLC.js)-8-orange?logo=videojs)
-![Express](https://img.shields.io/badge/Express-4-green?logo=express)
-
----
-
-## Recent Player UI Refinements
-The latest update focused on creating a world-class "Netflix Original" viewing experience:
-- **Enhanced Metadata & SEO**: Integrated OpenGraph (OG) tags and optimized meta descriptions for 100% SEO visibility.
-- **Personalized Lists**: Implemented "My List" functionality with local storage persistence for a customized viewing experience.
-- **PWA Excellence**: Fully optimized Service Worker and manifest for 100% "Installable" audit scores.
-- **Full Documentation**: Added interactive JSDoc documentation across core stores and components.
-- **Dynamic Corner Alignment**: Synchronized the "Back" button and control cluster for a clean, consistent vertical grid line.
-- **Custom Branding**: Replaced the default Vite favicon with a custom-generated Netflix "N" tab logo.
+![React](https://img.shields.io/badge/React-19.2-blue?logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-7.3-purple?logo=vite&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.2-38B2AC?logo=tailwindcss&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-5.1-003B57?logo=sqlite&logoColor=white)
+![Express](https://img.shields.io/badge/Express-4.21-lightgrey?logo=express&logoColor=white)
 
 ---
 
-## Tech Stack & Architecture
+## 🚀 What's New: The "Cinema-Ready" Update
+The latest iteration elevates the prototype from a static UI to a functional ecosystem:
+- **Persistent Data Layer**: Migrated from volatile in-memory storage to a reliable **SQLite** database with automated seeding.
+- **Advanced Search API**: Implemented SQL-powered search functionality across titles, genres, and descriptions.
+- **Playback Telemetry**: Real-time logging of "Play" and "Stop" actions in the database for analytics simulations.
+- **Refined Player UX**: Centered playback controls with micro-animations, touch support for mobile, and advanced keyboard mapping.
+- **Responsive Branding**: Integrated a dynamic, professional footer and custom "Netflix-inspired" iconography across all viewports.
+
+---
+
+## 🛠️ Tech Stack & Architecture
 
 ### Frontend
-| Technology | Role |
-|---|---|
-| **React 19** | Core framework for ultra-fast UI rendering |
-| **Vite 7** | Modern build tool provided near-instant HMR |
-| **Tailwind CSS 4** | Next-gen CSS engine using the new `@theme` variable system |
-| **Video.js (VLC.js)** | High-performance media engine supporting HLS and adaptive streaming |
-| **Zustand** | Global state for movie data, playback history, and hover states |
+- **Framework**: React 19 (using the latest `use` and Concurrent features)
+- **Styling**: Tailwind CSS 4 (leveraging the new `@theme` variable system and zero-runtime footprint)
+- **State Management**: Zustand (high-performance global state for movies and user preferences)
+- **Media Engine**: Video.js (custom VLC.js wrapper) supporting adaptive bitrate simulations.
 
 ### Backend
-- **Node.js + Express**: Scalable REST API serving movie data and handling playback simulations.
-- **SQLite (In-progress)**: Transitioning from in-memory arrays to persistent storage for playback logs.
+- **Server**: Express.js with a formalized REST architecture.
+- **Database**: SQLite3 (via `sqlite` wrapper) for ACID-compliant persistence.
+- **Middleware**: Integrated CORS and schema validation for robust API interactions.
 
 ---
 
-## Project Structure
+## 📡 API Documentation
 
-```
+The backend serves as a high-performance REST API on port `5000`.
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/movies` | `GET` | Retrieve the full library of 35+ movies and shows. |
+| `/api/movies/:id` | `GET` | Get detailed metadata for a specific title. |
+| `/api/movies/search?q=`| `GET` | Perform a fuzzy search across the database. |
+| `/api/play/:id` | `POST` | Simulate streaming start & log event to DB. |
+| `/api/stop/:id` | `POST` | Interupt streaming & update status to 'available'. |
+| `/api/playback-log` | `GET` | Retrieve the last 50 system activities/logs. |
+
+---
+
+## 📂 Project Structure
+
+```bash
 netflix-clone/
-├── public/
-│   └── favicon.png            # Custom Netflix branding
 ├── src/
 │   ├── components/
-│   │   ├── FullScreenPlayer.jsx  # Refactored centered player controls
-│   │   ├── VideoJSPlayer.jsx     # Pro-grade VLC.js wrapper
-│   │   ├── MovieCard.jsx         # Hover-to-preview logic
-│   │   └── ...
-│   ├── index.css                 # Netflix design system & custom tokens
-│   └── store/                    # Zustand central state management
+│   │   ├── VideoPlayer/     # Pro-grade VLC.js wrapper & centered controls
+│   │   ├── MovieCard/       # Hover-to-preview logic & metadata overlays
+│   │   └── Navbar/Footer/   # Globally synced branding & navigation
+│   ├── store/               # Zustand state for persistence & movie data
+│   └── index.css            # Tailwind 4 design system & custom tokens
 ├── server/
-│   └── index.js                  # Express API with streaming logic
-└── README.md                     # Documentation
+│   ├── database.sqlite      # Persistent SQLite storage
+│   ├── movies_data.js       # Seed data for initial deployment
+│   └── index.js             # Express server with SQLite logic
+└── public/                  # Static assets & custom "N" favicon
 ```
 
 ---
 
-## Getting Started
-
-1. **Install Dependencies**:
-   ```bash
-   npm install && cd server && npm install && cd ..
-   ```
-
-2. **Run Everything**:
-   - Start Backend: `cd server && npm start`
-   - Start Frontend: `npm run dev`
-
----
-
-## Player Keyboard Shortcuts
+## ⌨️ Player Shortcuts
 | Key | Action |
 |-----|--------|
 | `Space` | Play / Pause |
-| `Escape` | Exit Theater Mode |
-| `M` | Mute |
-| `← / →` | Skip 10s back/forward |
-| `↑ / ↓` | Volume adjustment |
+| `M` | Mute Toggle |
+| `← / →` | Seek -/+ 10 Seconds |
+| `↑ / ↓` | Volume Up / Down |
 | `F` | Toggle Fullscreen |
+| `Esc` | Exit Video Theater |
 
 ---
 
-## Features Implemented
-- [x] **My List & Persistence**: Direct list management with LocalStorage caching.
-- [x] **SEO & Meta Optimization**: Full OpenGraph support for professional social previews.
-- [x] **Progressive Web App (PWA)**: 100% installable on iOS, Android, and Desktop.
-- [x] **Cinema-Grade Controls**: Centered, balanced playback hub with smooth hover transitions.
-- [x] **Glassmorphism UI**: Semi-transparent, blurred overlays for a premium feel.
-- [x] **Responsive Layout**: Adapts from mobile-first to 1920px+ "Theater Mode".
-- [x] **Hover Preview**: Instant Video.js initialization on movie card hover.
-- [x] **Custom Branding**: Fully replaced default assets with Netflix-inspired logos.
+## 🏁 Getting Started
+
+1. **Install Dependencies**:
+   ```bash
+   npm install && cd server && npm install
+   ```
+
+2. **Initialize & Start Backend**:
+   ```bash
+   cd server && npm start
+   ```
+
+3. **Launch Frontend**:
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## ✅ Core Features Implemented
+- [x] **Universal Search**: Fast, database-driven search engine.
+- [x] **My List Persistence**: LocalStorage-synced personal watchlists.
+- [x] **Adaptive Player**: Centered, responsive controls with glassmorphism UI.
+- [x] **SEO Optimized**: 100% lighthouse-ready meta tags and semantic HTML.
+- [x] **PWA Support**: Fully installable web application manifest.
+- [x] **Streaming Simulation**: Functional play/stop states tracked via SQLite.
+

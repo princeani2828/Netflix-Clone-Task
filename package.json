@@ -13,6 +13,7 @@
     "@tailwindcss/vite": "^4.2.0",
     "@types/video.js": "^7.3.58",
     "axios": "^1.13.5",
+    "node": "^25.6.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.0",
