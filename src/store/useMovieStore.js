@@ -40,11 +40,16 @@ const useMovieStore = create((set, get) => ({
                 const myList = savedList ? JSON.parse(savedList) : [];
 
                 set({ movies, playbackStatus, myList, loading: false });
+            } else {
+                set({
+                    error: 'Unexpected server response.',
+                    loading: false
+                });
             }
         } catch (error) {
             console.error('Failed to fetch movies:', error);
             set({
-                error: 'Failed to load movies. Please try again.',
+                error: 'Failed to load movies. Please check your connection.',
                 loading: false,
             });
         }
