@@ -692,8 +692,12 @@ app.use((err, req, res, next) => {
 // Initialize database and start server
 const initDbAndStartServer = async () => {
     try {
+        const dbPath = process.env.NODE_ENV === 'production'
+            ? ':memory:'
+            : path.join(__dirname, 'database.sqlite');
+
         db = await open({
-            filename: path.join(__dirname, 'database.sqlite'),
+            filename: dbPath,
             driver: sqlite3.Database
         });
 
@@ -742,23 +746,32 @@ const initDbAndStartServer = async () => {
             console.log('Database initialized with initial movie data.');
         }
 
-        app.listen(PORT, () => {
-            console.log(`
-            Netflix Clone API Server           
-            Running on http://localhost:${PORT}       
-            Endpoints:                             
-            GET  /movies                       
-            GET  /movies/:id                   
-            POST /play/:id                     
-            POST /stop/:id                     
-            GET  /api/playback-log                 
-            GET  /api/health                       
-            `);
-        });
+        // Only start the listening server if not running on Vercel/Serverless
+        if (process.env.NODE_ENV !== 'production') {
+            app.listen(PORT, () => {
+                console.log(`
+                Netflix Clone API Server           
+                Running on http://localhost:${PORT}       
+                Endpoints:                             
+                GET  /movies                       
+                GET  /movies/:id                   
+                POST /play/:id                     
+                POST /stop/:id                     
+                GET  /api/playback-log                 
+                GET  /api/health                       
+                `);
+            });
+        }
     } catch (error) {
         console.error('Failed to initialize database:', error);
-        process.exit(1);
+        if (process.env.NODE_ENV !== 'production') {
+            process.exit(1);
+        }
     }
 };
 
+// Start DB initialization
 initDbAndStartServer();
+
+// Export for Vercel
+module.exports = app;
